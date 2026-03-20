@@ -1,45 +1,106 @@
+import { SectionHeader } from "../components/ui/SectionHeader"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "../components/ui/Card"
+import { Button } from "../components/ui/Button"
+import { Input } from "../components/ui/Input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/Tabs"
+import { useState } from "react"
+
 export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState("general")
+
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-zinc-400">Manage your account and application preferences</p>
-      </header>
+    <div className="flex flex-col gap-6">
+      <SectionHeader
+        title="Settings"
+        description="Manage your account settings and preferences."
+      />
+      
+      <Tabs>
+        <TabsList className="mb-4">
+          <TabsTrigger 
+            active={activeTab === "general"} 
+            onClick={() => setActiveTab("general")}
+          >
+            General
+          </TabsTrigger>
+          <TabsTrigger 
+            active={activeTab === "security"} 
+            onClick={() => setActiveTab("security")}
+          >
+            Security
+          </TabsTrigger>
+          <TabsTrigger 
+            active={activeTab === "billing"} 
+            onClick={() => setActiveTab("billing")}
+          >
+            Billing
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 divide-y divide-zinc-800">
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-white">Profile Information</h3>
-          <p className="text-sm text-zinc-400 mt-1">Update your personal details</p>
-          <div className="mt-6 space-y-4">
-            <div>
-              <label className="text-sm font-medium text-zinc-300">Name</label>
-              <input 
-                type="text" 
-                className="mt-1 block w-full max-w-md rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-                placeholder="John Doe"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-zinc-300">Email</label>
-              <input 
-                type="email" 
-                className="mt-1 block w-full max-w-md rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-                placeholder="john@example.com"
-              />
-            </div>
-          </div>
-        </div>
+        <TabsContent active={activeTab === "general"}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Details</CardTitle>
+              <CardDescription>Update your personal information.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-zinc-300">Name</label>
+                <Input defaultValue="Admin User" />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-zinc-300">Email</label>
+                <Input defaultValue="admin@adaptiveai.com" type="email" />
+              </div>
+            </CardContent>
+            <CardFooter className="border-t border-zinc-800 px-6 py-4">
+              <Button>Save Changes</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
 
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-white">Security</h3>
-          <p className="text-sm text-zinc-400 mt-1">Manage your password and security settings</p>
-          <div className="mt-4">
-            <button className="rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700">
-              Change Password
-            </button>
-          </div>
-        </div>
-      </div>
+        <TabsContent active={activeTab === "security"}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Security Preferences</CardTitle>
+              <CardDescription>Manage your password and 2FA.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-zinc-300">Current Password</label>
+                <Input type="password" />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-zinc-300">New Password</label>
+                <Input type="password" />
+              </div>
+            </CardContent>
+            <CardFooter className="border-t border-zinc-800 px-6 py-4">
+              <Button>Update Password</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent active={activeTab === "billing"}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription Plan</CardTitle>
+              <CardDescription>You are currently on the Enterprise plan.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border border-zinc-800 p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-medium text-zinc-100">Enterprise Plan</h4>
+                    <p className="text-sm text-zinc-400">$499 / month</p>
+                  </div>
+                  <Button variant="outline">Manage Billing</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
