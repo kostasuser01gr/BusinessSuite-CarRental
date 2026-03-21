@@ -47,6 +47,15 @@ export interface KPIData {
   systemHealth: number;
 }
 
+// Assistant Action Types
+export type AssistantActionType = 'create_task' | 'create_note' | 'show_kpi' | 'navigate';
+
+export interface AssistantAction {
+  type: AssistantActionType;
+  payload: any;
+  label: string;
+}
+
 // Business Operations Types
 
 export type CustomerStatus = 'active' | 'inactive' | 'lead' | 'prospect';

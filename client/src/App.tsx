@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider } from './providers/AuthProvider'
 import { PreferencesProvider, usePreferences } from './providers/PreferencesProvider'
+import { OperationsProvider } from './providers/OperationsProvider'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import PublicRoute from './components/auth/PublicRoute'
 import AppShell from './components/layout/AppShell'
@@ -80,9 +81,11 @@ export default function App() {
   return (
     <PreferencesProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <AnimatedRoutes />
-        </BrowserRouter>
+        <OperationsProvider>
+          <BrowserRouter>
+            <AnimatedRoutes />
+          </BrowserRouter>
+        </OperationsProvider>
       </AuthProvider>
     </PreferencesProvider>
   )

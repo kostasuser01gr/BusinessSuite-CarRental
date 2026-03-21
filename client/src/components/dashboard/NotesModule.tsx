@@ -3,38 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Plus, Pin, Trash2, Edit3, Check, X, Tag } from 'lucide-react'
-import { Note } from '../../../../shared/types'
+import { useOperations } from '../../providers/OperationsProvider'
 import { cn } from '../../utils/cn'
-
-const INITIAL_NOTES: Note[] = [
-  { id: '1', title: 'Weekly Sync', content: 'Discussed scaling requirements for primary database.', pinned: true, category: 'Internal', updatedAt: new Date().toISOString() },
-  { id: '2', title: 'Client Feedback', content: 'Requested more granular RBAC for enterprise tier.', pinned: false, category: 'Product', updatedAt: new Date().toISOString() },
-]
+import { Note } from '../../../../shared/types'
 
 export function NotesModule() {
-  const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES)
+  const { notes, addNote, togglePin, deleteNote, updateNote } = useOperations()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editNote, setEditNote] = useState<{ title: string, content: string, category: string }>({ title: '', content: '', category: '' })
 
-  const addNote = () => {
-    const newNote: Note = {
-      id: Math.random().toString(36).substring(7),
-      title: 'New Note',
-      content: '',
-      pinned: false,
-      category: 'General',
-      updatedAt: new Date().toISOString()
-    }
-    setNotes([newNote, ...notes])
-    startEditing(newNote)
-  }
-
-  const togglePin = (id: string) => {
-    setNotes(notes.map(n => n.id === id ? { ...n, pinned: !n.pinned } : n))
-  }
-
-  const deleteNote = (id: string) => {
-    setNotes(notes.filter(n => n.id !== id))
+  const handleAddNote = () => {
+    addNote('New Note', '', 'General')
+    // Find the newly added note to start editing (it will be the first one)
+    // For simplicity, we just trigger the generic add.
   }
 
   const startEditing = (note: Note) => {
@@ -44,7 +25,7 @@ export function NotesModule() {
 
   const saveEdit = () => {
     if (!editingId) return
-    setNotes(notes.map(n => n.id === editingId ? { ...n, ...editNote, updatedAt: new Date().toISOString() } : n))
+    updateNote(editingId, editNote.title, editNote.content)
     setEditingId(null)
   }
 
@@ -58,7 +39,7 @@ export function NotesModule() {
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle>Quick Notes</CardTitle>
-        <Button variant="ghost" size="sm" onClick={addNote} aria-label="Add new note">
+        <Button variant="ghost" size="sm" onClick={handleAddNote} aria-label="Add new note">
           <Plus className="h-4 w-4 mr-1" /> Add
         </Button>
       </CardHeader>

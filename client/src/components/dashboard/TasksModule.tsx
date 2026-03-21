@@ -4,41 +4,21 @@ import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
 import { CheckCircle2, Clock, Plus, Trash2, Edit2, Check, Calendar } from 'lucide-react'
-import { Task, TaskPriority } from '../../../../shared/types'
+import { useOperations } from '../../providers/OperationsProvider'
 import { cn } from '../../utils/cn'
-
-const INITIAL_TASKS: Task[] = [
-  { id: '1', title: 'Review Q4 roadmap', completed: false, priority: 'high', createdAt: new Date().toISOString(), dueDate: '2026-03-25' },
-  { id: '2', title: 'Approve new hires', completed: false, priority: 'medium', createdAt: new Date().toISOString(), dueDate: '2026-03-22' },
-  { id: '3', title: 'Update privacy policy', completed: true, priority: 'low', createdAt: new Date().toISOString() },
-]
+import { Task } from '../../../../shared/types'
 
 export function TasksModule() {
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS)
+  const { tasks, addTask, toggleTask, deleteTask, updateTask } = useOperations()
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
 
-  const addTask = (e: React.FormEvent) => {
+  const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newTaskTitle.trim()) return
-    const newTask: Task = {
-      id: Math.random().toString(36).substring(7),
-      title: newTaskTitle,
-      completed: false,
-      priority: 'medium',
-      createdAt: new Date().toISOString()
-    }
-    setTasks([newTask, ...tasks])
+    addTask(newTaskTitle)
     setNewTaskTitle('')
-  }
-
-  const toggleTask = (id: string) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t))
-  }
-
-  const deleteTask = (id: string) => {
-    setTasks(tasks.filter(t => t.id !== id))
   }
 
   const startEditing = (task: Task) => {
@@ -48,7 +28,7 @@ export function TasksModule() {
 
   const saveEdit = () => {
     if (!editingId) return
-    setTasks(tasks.map(t => t.id === editingId ? { ...t, title: editTitle } : t))
+    updateTask(editingId, editTitle)
     setEditingId(null)
   }
 
@@ -58,7 +38,7 @@ export function TasksModule() {
         <CardTitle>Pending Tasks</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={addTask} className="flex gap-2 mb-4 mt-2">
+        <form onSubmit={handleAddTask} className="flex gap-2 mb-4 mt-2">
           <Input 
             placeholder="Add new task..." 
             value={newTaskTitle}

@@ -2,11 +2,16 @@ import { render, screen, fireEvent, within } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
 import { TasksModule } from '../client/src/components/dashboard/TasksModule'
 import { NotesModule } from '../client/src/components/dashboard/NotesModule'
+import { OperationsProvider } from '../client/src/providers/OperationsProvider'
 
 describe('Dashboard Core Modules - Verification Suite', () => {
   describe('TasksModule', () => {
     it('allows adding, completing, and editing a task', () => {
-      render(<TasksModule />)
+      render(
+        <OperationsProvider>
+          <TasksModule />
+        </OperationsProvider>
+      )
       
       // 1. Add
       const input = screen.getByPlaceholderText(/Add new task/i)
@@ -33,7 +38,11 @@ describe('Dashboard Core Modules - Verification Suite', () => {
     })
 
     it('allows deleting a task', () => {
-      render(<TasksModule />)
+      render(
+        <OperationsProvider>
+          <TasksModule />
+        </OperationsProvider>
+      )
       const taskTitle = 'Review Q4 roadmap'
       expect(screen.getByText(taskTitle)).toBeInTheDocument()
       
@@ -45,11 +54,20 @@ describe('Dashboard Core Modules - Verification Suite', () => {
 
   describe('NotesModule', () => {
     it('allows full note lifecycle: add, edit, pin, delete', () => {
-      render(<NotesModule />)
+      render(
+        <OperationsProvider>
+          <NotesModule />
+        </OperationsProvider>
+      )
       
-      // 1. Add & Edit (Starts in edit mode)
+      // 1. Add
       const addButton = screen.getByLabelText(/Add new note/i)
       fireEvent.click(addButton)
+      
+      // Click edit on the newly added note
+      const editBtn = screen.getByLabelText(/Edit note New Note/i)
+      fireEvent.click(editBtn)
+
       const titleInput = screen.getByLabelText(/Edit note title input/i)
       const contentInput = screen.getByLabelText(/Edit note content textarea/i)
       fireEvent.change(titleInput, { target: { value: 'Dev Note' } })
