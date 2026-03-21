@@ -19,7 +19,8 @@ import {
   Check,
   Eye,
   EyeOff,
-  GripVertical
+  GripVertical,
+  Navigation
 } from "lucide-react"
 
 export default function SettingsPage() {
@@ -27,13 +28,13 @@ export default function SettingsPage() {
   const { isInstallable, installApp } = usePWA()
   const { isSupported, isPlatformAuthenticatorAvailable, registerCredential } = useWebAuthn()
   
-  const { theme, setTheme, density, setDensity, widgets, setWidgets } = usePreferences()
-
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: false,
-    security: true
-  })
+  const { 
+    theme, setTheme, 
+    density, setDensity, 
+    widgets, setWidgets,
+    landingPage, setLandingPage,
+    notifications, setNotifications
+  } = usePreferences()
 
   const toggleWidget = (id: string) => {
     setWidgets(widgets.map(w => w.id === id ? { ...w, visible: !w.visible } : w))
@@ -78,31 +79,56 @@ export default function SettingsPage() {
 
         <TabsContent active={activeTab === "general"}>
           <div className="flex flex-col gap-6">
-            <Card className="border-zinc-800 bg-zinc-900/50">
+            <Card className="border-border bg-card shadow-sm">
               <CardHeader>
                 <CardTitle>Profile Details</CardTitle>
                 <CardDescription>Update your personal information.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium text-zinc-300">Name</label>
-                  <Input defaultValue="Admin User" className="bg-zinc-950 border-zinc-800 focus:border-blue-600 transition-colors" />
+                  <label className="text-sm font-medium text-foreground">Name</label>
+                  <Input defaultValue="Admin User" className="bg-background border-input focus:border-primary transition-colors" />
                 </div>
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium text-zinc-300">Email</label>
-                  <Input defaultValue="admin@adaptiveai.com" type="email" className="bg-zinc-950 border-zinc-800 focus:border-blue-600 transition-colors" />
+                  <label className="text-sm font-medium text-foreground">Email</label>
+                  <Input defaultValue="admin@adaptiveai.com" type="email" className="bg-background border-input focus:border-primary transition-colors" />
                 </div>
               </CardContent>
-              <CardFooter className="border-t border-zinc-800 px-6 py-4">
-                <Button className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">Save Changes</Button>
+              <CardFooter className="border-t border-border px-6 py-4">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Save Changes</Button>
               </CardFooter>
             </Card>
 
+            <Card className="border-border bg-card shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Navigation className="h-5 w-5 text-primary" />
+                  Navigation
+                </CardTitle>
+                <CardDescription>Choose where you land after logging in.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium text-foreground">Default Landing Page</label>
+                  <select 
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={landingPage}
+                    onChange={(e) => setLandingPage(e.target.value)}
+                  >
+                    <option value="/dashboard">Dashboard</option>
+                    <option value="/customers">Customers</option>
+                    <option value="/bookings">Bookings</option>
+                    <option value="/workspace">Workspace</option>
+                  </select>
+                </div>
+              </CardContent>
+            </Card>
+
             {isInstallable && (
-              <Card className="border-blue-900/30 bg-blue-900/5">
+              <Card className="border-primary/20 bg-primary/5">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Download className="h-5 w-5 text-blue-500" />
+                    <Download className="h-5 w-5 text-primary" />
                     Install Desktop App
                   </CardTitle>
                   <CardDescription>
@@ -110,7 +136,7 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button onClick={installApp} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button onClick={installApp} className="bg-primary text-primary-foreground hover:bg-primary/90">
                     Install Now
                   </Button>
                 </CardContent>
@@ -121,10 +147,10 @@ export default function SettingsPage() {
 
         <TabsContent active={activeTab === "appearance"}>
           <div className="flex flex-col gap-6">
-            <Card className="border-zinc-800 bg-zinc-900/50">
+            <Card className="border-border bg-card shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Palette className="h-5 w-5 text-zinc-400" />
+                  <Palette className="h-5 w-5 text-muted-foreground" />
                   Theme
                 </CardTitle>
                 <CardDescription>Choose how AdaptiveAI looks on your device.</CardDescription>
@@ -136,21 +162,21 @@ export default function SettingsPage() {
                       key={t}
                       onClick={() => setTheme(t)}
                       className={`flex flex-col items-center gap-3 rounded-lg border p-4 transition-all ${
-                        theme === t ? 'border-blue-600 bg-blue-600/10' : 'border-zinc-800 bg-zinc-950 hover:bg-zinc-900'
+                        theme === t ? 'border-primary bg-primary/10' : 'border-border bg-background hover:bg-accent'
                       }`}
                     >
                       <div className={`h-12 w-full rounded ${t === 'light' ? 'bg-zinc-200' : t === 'dark' ? 'bg-zinc-800' : 'bg-gradient-to-r from-zinc-200 to-zinc-800'}`} />
-                      <span className="text-sm font-medium capitalize text-zinc-300">{t}</span>
+                      <span className="text-sm font-medium capitalize text-foreground">{t}</span>
                     </button>
                   ))}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-zinc-800 bg-zinc-900/50">
+            <Card className="border-border bg-card shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Layout className="h-5 w-5 text-zinc-400" />
+                  <Layout className="h-5 w-5 text-muted-foreground" />
                   Layout Density
                 </CardTitle>
                 <CardDescription>Adjust the density of the user interface.</CardDescription>
@@ -162,7 +188,7 @@ export default function SettingsPage() {
                       key={d}
                       variant={density === d ? "default" : "outline"}
                       onClick={() => setDensity(d)}
-                      className={`capitalize transition-colors ${density === d ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'}`}
+                      className={`capitalize transition-colors ${density === d ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'border-input text-foreground hover:bg-accent'}`}
                     >
                       {d}
                     </Button>
@@ -174,10 +200,10 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent active={activeTab === "dashboard"}>
-          <Card className="border-zinc-800 bg-zinc-900/50">
+          <Card className="border-border bg-card shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Layout className="h-5 w-5 text-zinc-400" />
+                <Layout className="h-5 w-5 text-muted-foreground" />
                 Dashboard Layout
               </CardTitle>
               <CardDescription>Toggle which modules appear on your dashboard. Reordering can be done directly on the dashboard page.</CardDescription>
@@ -185,16 +211,16 @@ export default function SettingsPage() {
             <CardContent>
               <div className="space-y-2">
                 {[...widgets].sort((a, b) => a.order - b.order).map(w => (
-                  <div key={w.id} className="flex items-center justify-between p-3 rounded-md border border-zinc-800 bg-zinc-950">
+                  <div key={w.id} className="flex items-center justify-between p-3 rounded-md border border-border bg-background shadow-sm">
                     <div className="flex items-center gap-3">
-                      <GripVertical className="h-4 w-4 text-zinc-600" />
-                      <span className="text-sm font-medium text-zinc-200">{getWidgetName(w.id)}</span>
+                      <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">{getWidgetName(w.id)}</span>
                     </div>
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => toggleWidget(w.id)}
-                      className={w.visible ? "text-blue-500" : "text-zinc-500"}
+                      className={w.visible ? "text-primary hover:text-primary/80" : "text-muted-foreground hover:text-foreground"}
                     >
                       {w.visible ? <><Eye className="h-4 w-4 mr-2" /> Visible</> : <><EyeOff className="h-4 w-4 mr-2" /> Hidden</>}
                     </Button>
@@ -206,10 +232,10 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent active={activeTab === "notifications"}>
-          <Card className="border-zinc-800 bg-zinc-900/50">
+          <Card className="border-border bg-card shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-zinc-400" />
+                <Bell className="h-5 w-5 text-muted-foreground" />
                 Notification Preferences
               </CardTitle>
               <CardDescription>Control how you receive updates and alerts.</CardDescription>
@@ -217,53 +243,53 @@ export default function SettingsPage() {
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <h4 className="font-medium text-zinc-100">Email Notifications</h4>
-                  <p className="text-sm text-zinc-400">Receive reports and summaries via email.</p>
+                  <h4 className="font-medium text-foreground">Email Notifications</h4>
+                  <p className="text-sm text-muted-foreground">Receive reports and summaries via email.</p>
                 </div>
                 <input 
                   type="checkbox" 
                   checked={notifications.email}
                   onChange={(e) => setNotifications({...notifications, email: e.target.checked})}
-                  className="h-5 w-5 rounded border-zinc-800 bg-zinc-950 text-blue-600 focus:ring-blue-600 accent-blue-600 transition-colors"
+                  className="h-5 w-5 rounded border-border bg-background text-primary focus:ring-primary accent-primary transition-colors"
                 />
               </div>
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <h4 className="font-medium text-zinc-100">Push Notifications</h4>
-                  <p className="text-sm text-zinc-400">Get instant alerts on your desktop or mobile.</p>
+                  <h4 className="font-medium text-foreground">Push Notifications</h4>
+                  <p className="text-sm text-muted-foreground">Get instant alerts on your desktop or mobile.</p>
                 </div>
                 <input 
                   type="checkbox" 
                   checked={notifications.push}
                   onChange={(e) => setNotifications({...notifications, push: e.target.checked})}
-                  className="h-5 w-5 rounded border-zinc-800 bg-zinc-950 text-blue-600 focus:ring-blue-600 accent-blue-600 transition-colors"
+                  className="h-5 w-5 rounded border-border bg-background text-primary focus:ring-primary accent-primary transition-colors"
                 />
               </div>
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <h4 className="font-medium text-zinc-100">Security Alerts</h4>
-                  <p className="text-sm text-zinc-400">Important notices about your account security.</p>
+                  <h4 className="font-medium text-foreground">Security Alerts</h4>
+                  <p className="text-sm text-muted-foreground">Important notices about your account security.</p>
                 </div>
                 <input 
                   type="checkbox" 
                   checked={notifications.security}
                   onChange={(e) => setNotifications({...notifications, security: e.target.checked})}
-                  className="h-5 w-5 rounded border-zinc-800 bg-zinc-950 text-blue-600 focus:ring-blue-600 accent-blue-600 transition-colors"
+                  className="h-5 w-5 rounded border-border bg-background text-primary focus:ring-primary accent-primary transition-colors"
                 />
               </div>
             </CardContent>
-            <CardFooter className="border-t border-zinc-800 px-6 py-4 text-xs text-zinc-500">
-              Changes are saved automatically.
+            <CardFooter className="border-t border-border px-6 py-4 text-xs text-muted-foreground">
+              Changes are saved automatically to your device.
             </CardFooter>
           </Card>
         </TabsContent>
 
         <TabsContent active={activeTab === "security"}>
           <div className="flex flex-col gap-6">
-            <Card className="border-zinc-800 bg-zinc-900/50">
+            <Card className="border-border bg-card shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Fingerprint className="h-5 w-5 text-blue-500" />
+                  <Fingerprint className="h-5 w-5 text-primary" />
                   Biometric Authentication
                 </CardTitle>
                 <CardDescription>
@@ -272,24 +298,24 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 {!isSupported ? (
-                  <div className="rounded-md bg-zinc-950 p-4 text-sm text-zinc-400 border border-zinc-800">
+                  <div className="rounded-md bg-muted p-4 text-sm text-muted-foreground border border-border">
                     WebAuthn is not supported by your current browser or device.
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950 p-4 transition-colors hover:border-zinc-700">
+                    <div className="flex items-center justify-between rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/50 group shadow-sm">
                       <div className="flex items-center gap-3">
-                        <ShieldCheck className="h-5 w-5 text-green-500" />
+                        <ShieldCheck className="h-5 w-5 text-emerald-500" />
                         <div>
-                          <p className="font-medium text-zinc-100">Passkeys & Biometrics</p>
-                          <p className="text-xs text-zinc-500">
+                          <p className="font-medium text-foreground group-hover:text-primary transition-colors">Passkeys & Biometrics</p>
+                          <p className="text-xs text-muted-foreground">
                             {isPlatformAuthenticatorAvailable 
                               ? "Platform authenticator detected." 
                               : "No platform authenticator detected, but security keys are supported."}
                           </p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" onClick={registerCredential} className="border-zinc-700 hover:bg-zinc-800">
+                      <Button variant="outline" size="sm" onClick={registerCredential} className="border-border hover:bg-accent shadow-sm">
                         Setup
                       </Button>
                     </div>
@@ -298,53 +324,53 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-zinc-800 bg-zinc-900/50">
+            <Card className="border-border bg-card shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Smartphone className="h-5 w-5 text-zinc-400" />
+                  <Smartphone className="h-5 w-5 text-muted-foreground" />
                   Trusted Devices
                 </CardTitle>
                 <CardDescription>Manage the devices where you are logged in.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950 p-4 transition-colors hover:border-zinc-700">
+                <div className="flex items-center justify-between rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/50 group shadow-sm">
                   <div className="flex items-center gap-3">
-                    <Laptop className="h-5 w-5 text-zinc-400" />
+                    <Laptop className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="font-medium text-zinc-100">MacBook Pro - Chrome</p>
-                      <p className="text-xs text-zinc-500">Current session • San Francisco, CA</p>
+                      <p className="font-medium text-foreground group-hover:text-primary transition-colors">MacBook Pro - Chrome</p>
+                      <p className="text-xs text-muted-foreground">Current session • San Francisco, CA</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-green-500 font-medium bg-green-500/10 px-2 py-1 rounded">
+                  <div className="flex items-center gap-2 text-xs text-emerald-500 font-medium bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
                     <Check className="h-3 w-3" />
                     Active
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="border-t border-zinc-800 px-6 py-4">
-                <Button variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-900/20 transition-colors">
+              <CardFooter className="border-t border-border px-6 py-4">
+                <Button variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors">
                   Sign out from all other devices
                 </Button>
               </CardFooter>
             </Card>
 
-            <Card className="border-zinc-800 bg-zinc-900/50">
+            <Card className="border-border bg-card shadow-sm">
               <CardHeader>
                 <CardTitle>Change Password</CardTitle>
                 <CardDescription>Ensure your account is using a long, random password.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium text-zinc-300">Current Password</label>
-                  <Input type="password" placeholder="••••••••" className="bg-zinc-950 border-zinc-800 focus:border-blue-600 transition-colors" />
+                  <label className="text-sm font-medium text-foreground">Current Password</label>
+                  <Input type="password" placeholder="••••••••" className="bg-background border-input focus:border-primary transition-colors shadow-sm" />
                 </div>
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium text-zinc-300">New Password</label>
-                  <Input type="password" placeholder="••••••••" className="bg-zinc-950 border-zinc-800 focus:border-blue-600 transition-colors" />
+                  <label className="text-sm font-medium text-foreground">New Password</label>
+                  <Input type="password" placeholder="••••••••" className="bg-background border-input focus:border-primary transition-colors shadow-sm" />
                 </div>
               </CardContent>
-              <CardFooter className="border-t border-zinc-800 px-6 py-4">
-                <Button className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">Update Password</Button>
+              <CardFooter className="border-t border-border px-6 py-4">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Update Password</Button>
               </CardFooter>
             </Card>
           </div>

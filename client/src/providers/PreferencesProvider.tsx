@@ -9,6 +9,12 @@ export interface DashboardWidget {
   order: number;
 }
 
+export interface NotificationPreferences {
+  email: boolean;
+  push: boolean;
+  security: boolean;
+}
+
 export const defaultWidgets: DashboardWidget[] = [
   { id: 'kpi', visible: true, order: 0 },
   { id: 'tasks', visible: true, order: 1 },
@@ -24,6 +30,10 @@ interface PreferencesContextType {
   setDensity: (density: Density) => void;
   widgets: DashboardWidget[];
   setWidgets: (widgets: DashboardWidget[]) => void;
+  landingPage: string;
+  setLandingPage: (page: string) => void;
+  notifications: NotificationPreferences;
+  setNotifications: (prefs: NotificationPreferences) => void;
 }
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
@@ -51,6 +61,22 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     return defaultWidgets;
   });
 
+  const [landingPage, setLandingPage] = useState<string>(() => {
+    return localStorage.getItem('adaptive_landing_page') || '/dashboard';
+  });
+
+  const [notifications, setNotifications] = useState<NotificationPreferences>(() => {
+    const saved = localStorage.getItem('adaptive_notifications');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return { email: true, push: false, security: true };
+      }
+    }
+    return { email: true, push: false, security: true };
+  });
+
   useEffect(() => {
     localStorage.setItem('adaptive_theme', theme);
     if (theme === 'dark' || (theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)) {
@@ -69,8 +95,22 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('adaptive_widgets', JSON.stringify(widgets));
   }, [widgets]);
 
+  useEffect(() => {
+    localStorage.setItem('adaptive_landing_page', landingPage);
+  }, [landingPage]);
+
+  useEffect(() => {
+    localStorage.setItem('adaptive_notifications', JSON.stringify(notifications));
+  }, [notifications]);
+
   return (
-    <PreferencesContext.Provider value={{ theme, setTheme, density, setDensity, widgets, setWidgets }}>
+    <PreferencesContext.Provider value={{ 
+      theme, setTheme, 
+      density, setDensity, 
+      widgets, setWidgets,
+      landingPage, setLandingPage,
+      notifications, setNotifications
+    }}>
       {children}
     </PreferencesContext.Provider>
   );
