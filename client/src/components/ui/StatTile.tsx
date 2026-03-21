@@ -1,45 +1,46 @@
-import * as React from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "./Card"
+import { Card, CardContent } from "./Card"
 import { cn } from "../../utils/cn"
+import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react"
 
-export function StatTile({
-  title,
-  value,
-  icon,
-  trend,
-  trendValue,
-  className
-}: {
+interface StatTileProps {
   title: string
   value: string | number
-  icon?: React.ReactNode
+  icon: React.ReactNode
   trend?: "up" | "down" | "neutral"
   trendValue?: string
   className?: string
-}) {
+}
+
+export function StatTile({ title, value, icon, trend, trendValue, className }: StatTileProps) {
   return (
-    <Card className={cn("overflow-hidden", className)}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-sm font-medium text-zinc-400">{title}</CardTitle>
-        {icon && <div className="text-zinc-500">{icon}</div>}
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-zinc-50">{value}</div>
-        {trendValue && (
-          <p className="text-xs mt-1">
-            <span
-              className={cn(
-                "font-medium",
-                trend === "up" ? "text-emerald-500" : "",
-                trend === "down" ? "text-red-500" : "",
-                trend === "neutral" ? "text-zinc-500" : ""
-              )}
-            >
-              {trendValue}
-            </span>{" "}
-            <span className="text-zinc-500">from last month</span>
+    <Card className={cn("overflow-hidden group hover:border-primary/50 transition-colors duration-300", className)}>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+            {title}
           </p>
-        )}
+          <div className="p-2 bg-muted rounded-lg text-muted-foreground group-hover:text-primary transition-colors">
+            {icon}
+          </div>
+        </div>
+        <div className="mt-2">
+          <h3 className="text-2xl font-bold tracking-tight text-foreground">{value}</h3>
+          {trend && (
+            <div className="mt-1 flex items-center gap-1">
+              {trend === "up" && <ArrowUpRight className="h-3 w-3 text-emerald-500" />}
+              {trend === "down" && <ArrowDownRight className="h-3 w-3 text-red-500" />}
+              {trend === "neutral" && <Minus className="h-3 w-3 text-muted-foreground" />}
+              <span className={cn(
+                "text-xs font-medium",
+                trend === "up" ? "text-emerald-500" : 
+                trend === "down" ? "text-red-500" : 
+                "text-muted-foreground"
+              )}>
+                {trendValue}
+              </span>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   )

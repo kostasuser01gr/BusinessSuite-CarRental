@@ -1,18 +1,32 @@
 import { User } from '../../shared/types.js'
 
-// In-memory store for users (temporary baseline)
-// In production, this would be replaced with a real database
-export const usersStore: (User & { passwordHash: string })[] = []
+type UserWithPassword = User & { passwordHash: string }
 
-export const findUserByEmail = (email: string) => {
-  return usersStore.find(u => u.email === email)
+// Isolated in-memory store
+class MemoryStore {
+  private users: UserWithPassword[] = []
+
+  findUserByEmail(email: string) {
+    return this.users.find(u => u.email === email)
+  }
+
+  findUserById(id: string) {
+    return this.users.find(u => u.id === id)
+  }
+
+  createUser(user: UserWithPassword) {
+    this.users.push(user)
+    return user
+  }
+
+  clear() {
+    this.users = []
+  }
 }
 
-export const findUserById = (id: string) => {
-  return usersStore.find(u => u.id === id)
-}
+const store = new MemoryStore()
 
-export const createUser = (user: User & { passwordHash: string }) => {
-  usersStore.push(user)
-  return user
-}
+export const findUserByEmail = (email: string) => store.findUserByEmail(email)
+export const findUserById = (id: string) => store.findUserById(id)
+export const createUser = (user: UserWithPassword) => store.createUser(user)
+export const clearStore = () => store.clear()

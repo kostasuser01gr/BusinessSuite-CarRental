@@ -8,13 +8,16 @@
     "dev:server": "PORT=5000 tsx watch server/index.ts",
     "dev": "concurrently -n client,server -c blue,green \"npm:dev:client\" \"npm:dev:server\"",
     "build:client": "vite build --config vite.config.ts",
-    "build:server": "tsc server/index.ts --outDir dist/server --module nodenext --target es2022 --moduleResolution nodenext --esModuleInterop --skipLibCheck",
+    "build:server": "tsc -p tsconfig.server.json",
     "build": "npm run build:client && npm run build:server",
     "start": "node dist/server/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "NODE_ENV=test vitest run --config vitest.config.ts",
-    "test:e2e": "playwright test"
+    "test:watch": "NODE_ENV=test vitest --config vitest.config.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "verify": "bash scripts/verify.sh"
   },
   "dependencies": {
     "@types/react-router-dom": "^5.3.3",
