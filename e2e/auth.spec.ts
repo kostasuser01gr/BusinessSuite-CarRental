@@ -15,22 +15,10 @@ test.describe('AdaptiveAI Business Suite - Core Flows', () => {
     await page.fill('input[id="password"]', testUser.password);
     await page.fill('input[id="confirmPassword"]', testUser.password);
     
-    // Capture potential errors
-    page.on('console', msg => {
-      if (msg.type() === 'error') console.log(`BROWSER ERROR: ${msg.text()}`);
-    });
-
     await page.click('button[type="submit"]');
 
     // 2. Dashboard Verification
-    try {
-      await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
-    } catch (e) {
-      const errorMsg = await page.locator('.text-red-400').textContent().catch(() => 'No visible error message');
-      console.log(`Signup failed to redirect. Visible error: ${errorMsg}`);
-      throw e;
-    }
-    
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
     await expect(page.locator('text=E2E Tester')).toBeVisible();
 
     // 3. Task Interaction
@@ -63,6 +51,36 @@ test.describe('AdaptiveAI Business Suite - Core Flows', () => {
     // 7. Verification of protection
     await page.goto('/dashboard');
     await expect(page).toHaveURL(/\/login/);
+  });
+
+  test('login flow', async ({ page }) => {
+    const loginUser = {
+      name: 'Login User',
+      email: `login-${Date.now()}@example.com`,
+      password: 'password123'
+    };
+
+    // First signup to create the user
+    await page.goto('/signup');
+    await page.fill('input[id="name"]', loginUser.name);
+    await page.fill('input[id="email"]', loginUser.email);
+    await page.fill('input[id="password"]', loginUser.password);
+    await page.fill('input[id="confirmPassword"]', loginUser.password);
+    await page.click('button[type="submit"]');
+    await expect(page).toHaveURL(/\/dashboard/);
+
+    // Logout
+    await page.click('button:has-text("Sign out")');
+    await expect(page).toHaveURL(/\/login/);
+
+    // Login
+    await page.fill('input[id="email"]', loginUser.email);
+    await page.fill('input[id="password"]', loginUser.password);
+    await page.click('button[type="submit"]');
+
+    // Verification
+    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page.locator(`text=${loginUser.name}`)).toBeVisible();
   });
 
   test('unauthorized users are redirected to login', async ({ page }) => {
