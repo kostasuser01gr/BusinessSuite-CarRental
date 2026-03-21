@@ -4,6 +4,7 @@ import { SectionHeader } from "../components/ui/SectionHeader"
 import { Button } from "../components/ui/Button"
 import { Input } from "../components/ui/Input"
 import { Badge } from "../components/ui/Badge"
+import { Drawer } from "../components/ui/Drawer"
 import { 
   Table, 
   TableBody, 
@@ -19,7 +20,11 @@ import {
   CheckCircle2,
   Clock,
   MoreVertical,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Wrench,
+  User as UserIcon,
+  MessageSquare,
+  Edit2
 } from "lucide-react"
 import { MaintenanceRecord } from "../../../shared/types"
 
@@ -34,6 +39,9 @@ const MOCK_MAINTENANCE: MaintenanceRecord[] = [
 export default function MaintenancePage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [records] = useState<MaintenanceRecord[]>(MOCK_MAINTENANCE)
+  const [selectedRecord, setSelectedRecord] = useState<MaintenanceRecord | null>(null)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [drawerMode, setDrawerMode] = useState<'create' | 'edit' | 'view'>('view')
 
   const filteredRecords = records.filter(r => 
     r.assetName.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -60,13 +68,24 @@ export default function MaintenancePage() {
     }
   }
 
+  const openDrawer = (record: MaintenanceRecord | null, mode: 'create' | 'edit' | 'view') => {
+    setSelectedRecord(record)
+    setDrawerMode(mode)
+    setIsDrawerOpen(true)
+  }
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false)
+    setSelectedRecord(null)
+  }
+
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       <SectionHeader
         title="Maintenance"
         description="Track equipment repairs and scheduled service."
         action={
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => openDrawer(null, 'create')}>
             <Plus className="h-4 w-4" /> New Ticket
           </Button>
         }
@@ -110,7 +129,7 @@ export default function MaintenancePage() {
               </TableRow>
             ) : (
               filteredRecords.map((record) => (
-                <TableRow key={record.id}>
+                <TableRow key={record.id} className="cursor-pointer group" onClick={() => openDrawer(record, 'view')}>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium text-foreground">{record.assetName}</span>
@@ -133,10 +152,12 @@ export default function MaintenancePage() {
                       {new Date(record.dueDate).toLocaleDateString()}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex justify-end">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openDrawer(record, 'edit')}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -144,6 +165,109 @@ export default function MaintenancePage() {
           </TableBody>
         </Table>
       </div>
+
+      <Drawer
+        isOpen={isDrawerOpen}
+        onClose={closeDrawer}
+        title={drawerMode === 'create' ? 'New Ticket' : drawerMode === 'edit' ? 'Edit Ticket' : 'Ticket Details'}
+        description="Equipment repair and service coordination."
+        footer={
+          drawerMode !== 'view' ? (
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={closeDrawer}>Cancel</Button>
+              <Button onClick={closeDrawer}>{drawerMode === 'create' ? 'Create Ticket' : 'Save Changes'}</Button>
+            </div>
+          ) : (
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" className="gap-2" onClick={() => setDrawerMode('edit')}>
+                <Edit2 className="h-4 w-4" /> Edit
+              </Button>
+              <Button className="gap-2">
+                <CheckCircle2 className="h-4 w-4" /> Resolve Ticket
+              </Button>
+            </div>
+          )
+        }
+      >
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Asset</label>
+              <div className="relative">
+                <Wrench className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  defaultValue={selectedRecord?.assetName || ''} 
+                  disabled={drawerMode === 'view'}
+                  placeholder="Select asset..."
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Issue Description</label>
+              <textarea 
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                defaultValue={selectedRecord?.issue || ''} 
+                disabled={drawerMode === 'view'}
+                placeholder="Describe the technical problem..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Priority</label>
+                <select 
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  defaultValue={selectedRecord?.priority || 'medium'}
+                  disabled={drawerMode === 'view'}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Due Date</label>
+                <Input 
+                  type="date" 
+                  defaultValue={selectedRecord?.dueDate || ''} 
+                  disabled={drawerMode === 'view'}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Assigned Technician</label>
+              <div className="relative">
+                <UserIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  defaultValue="John Smith" 
+                  disabled={drawerMode === 'view'}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+          </div>
+
+          {drawerMode === 'view' && (
+            <div className="pt-6 border-t border-border">
+              <h3 className="text-sm font-semibold mb-4">Resolution Notes</h3>
+              <div className="space-y-4">
+                <div className="bg-muted/50 p-3 rounded-lg border border-border">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase text-muted-foreground">Admin</span>
+                    <span className="text-[10px] text-muted-foreground">Today, 9:45 AM</span>
+                  </div>
+                  <p className="text-sm">Spare parts have been ordered. ETA 2 days.</p>
+                </div>
+                <div className="relative">
+                  <MessageSquare className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Add a comment..." className="pl-9" />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Drawer>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { SectionHeader } from "../components/ui/SectionHeader"
 import { Button } from "../components/ui/Button"
 import { Input } from "../components/ui/Input"
 import { Badge } from "../components/ui/Badge"
+import { Drawer } from "../components/ui/Drawer"
 import { 
   Table, 
   TableBody, 
@@ -17,7 +18,11 @@ import {
   Plus, 
   Activity,
   MapPin,
-  AlertTriangle
+  AlertTriangle,
+  Edit2,
+  Trash2,
+  Settings as SettingsIcon,
+  History
 } from "lucide-react"
 import { Asset } from "../../../shared/types"
 
@@ -32,6 +37,9 @@ const MOCK_ASSETS: Asset[] = [
 export default function AssetsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [assets] = useState<Asset[]>(MOCK_ASSETS)
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [drawerMode, setDrawerMode] = useState<'create' | 'edit' | 'view'>('view')
 
   const filteredAssets = assets.filter(a => 
     a.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -54,13 +62,24 @@ export default function AssetsPage() {
     return 'text-destructive'
   }
 
+  const openDrawer = (asset: Asset | null, mode: 'create' | 'edit' | 'view') => {
+    setSelectedAsset(asset)
+    setDrawerMode(mode)
+    setIsDrawerOpen(true)
+  }
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false)
+    setSelectedAsset(null)
+  }
+
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       <SectionHeader
         title="Fleet & Assets"
         description="Monitor physical assets and infrastructure health."
         action={
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => openDrawer(null, 'create')}>
             <Plus className="h-4 w-4" /> Add Asset
           </Button>
         }
@@ -97,7 +116,7 @@ export default function AssetsPage() {
               <TableHead>Status</TableHead>
               <TableHead>Health</TableHead>
               <TableHead className="hidden lg:table-cell">Location</TableHead>
-              <TableHead className="text-right">Monitoring</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -109,7 +128,7 @@ export default function AssetsPage() {
               </TableRow>
             ) : (
               filteredAssets.map((asset) => (
-                <TableRow key={asset.id}>
+                <TableRow key={asset.id} className="cursor-pointer group" onClick={() => openDrawer(asset, 'view')}>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium text-foreground">{asset.name}</span>
@@ -141,16 +160,11 @@ export default function AssetsPage() {
                       {asset.location}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                        <Activity className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openDrawer(asset, 'edit')}>
+                        <Edit2 className="h-4 w-4" />
                       </Button>
-                      {asset.health < 50 && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                          <AlertTriangle className="h-4 w-4" />
-                        </Button>
-                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -159,6 +173,118 @@ export default function AssetsPage() {
           </TableBody>
         </Table>
       </div>
+
+      <Drawer
+        isOpen={isDrawerOpen}
+        onClose={closeDrawer}
+        title={drawerMode === 'create' ? 'Add New Asset' : drawerMode === 'edit' ? 'Edit Asset' : 'Asset Overview'}
+        description="Specifications and operational status."
+        footer={
+          drawerMode !== 'view' ? (
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={closeDrawer}>Cancel</Button>
+              <Button onClick={closeDrawer}>{drawerMode === 'create' ? 'Register Asset' : 'Save Changes'}</Button>
+            </div>
+          ) : (
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" className="gap-2" onClick={() => setDrawerMode('edit')}>
+                <SettingsIcon className="h-4 w-4" /> Config
+              </Button>
+              <Button className="gap-2">
+                <History className="h-4 w-4" /> Maintenance Log
+              </Button>
+            </div>
+          )
+        }
+      >
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Asset Name</label>
+              <Input 
+                defaultValue={selectedAsset?.name || ''} 
+                disabled={drawerMode === 'view'}
+                placeholder="e.g. Delivery Van #12" 
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Type</label>
+                <select 
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  defaultValue={selectedAsset?.type || 'Vehicle'}
+                  disabled={drawerMode === 'view'}
+                >
+                  <option value="Vehicle">Vehicle</option>
+                  <option value="UAV">UAV</option>
+                  <option value="Heavy Machinery">Heavy Machinery</option>
+                  <option value="IT Infrastructure">IT Infrastructure</option>
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Status</label>
+                <select 
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  defaultValue={selectedAsset?.status || 'available'}
+                  disabled={drawerMode === 'view'}
+                >
+                  <option value="available">Available</option>
+                  <option value="in-use">In Use</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="retired">Retired</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Current Location</label>
+              <div className="relative">
+                <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  defaultValue={selectedAsset?.location || ''} 
+                  disabled={drawerMode === 'view'}
+                  placeholder="e.g. Warehouse A"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            {drawerMode !== 'create' && (
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Health Score ({selectedAsset?.health || 0}%)</label>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  defaultValue={selectedAsset?.health || 100} 
+                  disabled={drawerMode === 'view'}
+                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+              </div>
+            )}
+          </div>
+
+          {drawerMode === 'view' && (
+            <div className="pt-6 border-t border-border">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold">Sensor Telemetry</h3>
+                <Badge variant="outline" className="text-[10px] uppercase">Live</Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: 'Battery/Fuel', value: '88%', status: 'nominal' },
+                  { label: 'Temperature', value: '42°C', status: 'nominal' },
+                  { label: 'Uptime', value: '14d 6h', status: 'nominal' },
+                  { label: 'Load factor', value: '12%', status: 'low' },
+                ].map((item, i) => (
+                  <div key={i} className="bg-muted/50 p-3 rounded-lg border border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{item.label}</p>
+                    <p className="text-lg font-bold">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </Drawer>
     </div>
   )
 }
