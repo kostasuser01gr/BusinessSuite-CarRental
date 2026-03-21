@@ -12,6 +12,7 @@ export interface Task {
   completed: boolean;
   priority: TaskPriority;
   createdAt: string;
+  dueDate?: string;
 }
 
 export interface Note {

@@ -4,7 +4,11 @@ import { requireAuth } from '../middleware/auth.js';
 const router = Router();
 
 router.get('/ping', requireAuth, (req, res) => {
-  res.json({ message: 'pong', userId: req.session.userId });
+  res.json({ 
+    message: 'pong', 
+    userId: req.session.userId,
+    user: req.user
+  });
 });
 
 export default router;

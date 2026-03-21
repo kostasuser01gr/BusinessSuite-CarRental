@@ -64,8 +64,8 @@ describe('Dashboard Core Modules - Verification Suite', () => {
       // 2. Pin
       const pinBtn = screen.getByLabelText(/Pin note Dev Note/i)
       fireEvent.click(pinBtn)
-      // Visual check for pin state (blue-500 class)
-      expect(pinBtn).toHaveClass('text-blue-500')
+      // Visual check for pin state (text-primary class)
+      expect(pinBtn).toHaveClass('text-primary')
 
       // 3. Delete
       const deleteBtn = screen.getByLabelText(/Delete note Dev Note/i)

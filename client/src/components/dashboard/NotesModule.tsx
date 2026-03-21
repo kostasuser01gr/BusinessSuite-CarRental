@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
-import { Plus, Pin, Trash2, Edit3, Check, X } from 'lucide-react'
+import { Plus, Pin, Trash2, Edit3, Check, X, Tag } from 'lucide-react'
 import { Note } from '../../../../shared/types'
+import { cn } from '../../utils/cn'
 
 const INITIAL_NOTES: Note[] = [
   { id: '1', title: 'Weekly Sync', content: 'Discussed scaling requirements for primary database.', pinned: true, category: 'Internal', updatedAt: new Date().toISOString() },
@@ -13,7 +14,7 @@ const INITIAL_NOTES: Note[] = [
 export function NotesModule() {
   const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editNote, setEditNote] = useState<{ title: string, content: string }>({ title: '', content: '' })
+  const [editNote, setEditNote] = useState<{ title: string, content: string, category: string }>({ title: '', content: '', category: '' })
 
   const addNote = () => {
     const newNote: Note = {
@@ -38,7 +39,7 @@ export function NotesModule() {
 
   const startEditing = (note: Note) => {
     setEditingId(note.id)
-    setEditNote({ title: note.title, content: note.content })
+    setEditNote({ title: note.title, content: note.content, category: note.category })
   }
 
   const saveEdit = () => {
@@ -64,63 +65,103 @@ export function NotesModule() {
       <CardContent>
         <div className="space-y-3 mt-2">
           {notes.length === 0 ? (
-            <div className="text-center py-8 text-zinc-500 text-sm">
+            <div className="text-center py-8 text-muted-foreground text-sm">
               No notes yet. Capture your thoughts!
             </div>
           ) : (
             sortedNotes.map((note) => (
-              <div key={note.id} className={`group relative rounded-lg border p-3 transition-colors ${editingId === note.id ? 'border-blue-600 bg-zinc-900' : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700'}`}>
+              <div 
+                key={note.id} 
+                className={cn(
+                  "group relative rounded-lg border p-3 transition-all duration-200",
+                  editingId === note.id 
+                    ? "border-primary bg-background shadow-md" 
+                    : "border-border bg-card hover:border-muted-foreground/50"
+                )}
+              >
                 {editingId === note.id ? (
                   <div className="space-y-2">
                     <Input 
                       value={editNote.title}
                       onChange={(e) => setEditNote({ ...editNote, title: e.target.value })}
                       placeholder="Title"
-                      className="h-7 text-sm font-medium bg-zinc-950 border-zinc-800"
+                      className="h-8 text-sm font-medium bg-background border-input"
                       aria-label="Edit note title input"
                     />
                     <textarea 
                       value={editNote.content}
                       onChange={(e) => setEditNote({ ...editNote, content: e.target.value })}
                       placeholder="Note content..."
-                      className="w-full min-h-[60px] text-xs bg-zinc-950 border border-zinc-800 rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-300"
+                      className="w-full min-h-[80px] text-xs bg-background border border-input rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
                       aria-label="Edit note content textarea"
                     />
-                    <div className="flex justify-end gap-2">
-                      <button onClick={cancelEdit} className="text-zinc-500 hover:text-zinc-300" aria-label="Cancel editing note">
-                        <X className="h-4 w-4" />
-                      </button>
-                      <button onClick={saveEdit} className="text-emerald-500 hover:text-emerald-400" aria-label="Save note changes">
-                        <Check className="h-4 w-4" />
-                      </button>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Tag className="absolute left-2 top-2 h-3 w-3 text-muted-foreground" />
+                        <Input 
+                          value={editNote.category}
+                          onChange={(e) => setEditNote({ ...editNote, category: e.target.value })}
+                          placeholder="Category"
+                          className="h-7 pl-7 text-[10px] bg-background border-input"
+                        />
+                      </div>
+                      <div className="flex gap-1">
+                        <button onClick={cancelEdit} className="p-1 text-muted-foreground hover:text-foreground" aria-label="Cancel editing note">
+                          <X className="h-4 w-4" />
+                        </button>
+                        <button onClick={saveEdit} className="p-1 text-emerald-500 hover:text-emerald-400" aria-label="Save note changes">
+                          <Check className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
                   <>
                     <div className="flex justify-between items-start gap-2">
-                      <h4 className="text-sm font-medium text-zinc-200 truncate cursor-pointer" onClick={() => startEditing(note)}>
+                      <h4 
+                        className="text-sm font-medium text-foreground truncate cursor-pointer hover:text-primary transition-colors" 
+                        onClick={() => startEditing(note)}
+                      >
                         {note.title}
                       </h4>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => startEditing(note)} className="text-zinc-500 hover:text-blue-500" aria-label={`Edit note ${note.title}`}>
-                          <Edit3 className="h-3 w-3" />
-                        </button>
-                        <button onClick={() => togglePin(note.id)} className={`${note.pinned ? 'text-blue-500' : 'text-zinc-500'} hover:text-blue-400`} aria-label={note.pinned ? `Unpin note ${note.title}` : `Pin note ${note.title}`}>
+                        <button 
+                          onClick={() => togglePin(note.id)} 
+                          className={cn(
+                            "p-1 transition-colors",
+                            note.pinned ? "text-primary" : "text-muted-foreground hover:text-primary"
+                          )} 
+                          aria-label={note.pinned ? `Unpin note ${note.title}` : `Pin note ${note.title}`}
+                        >
                           <Pin className="h-3 w-3" />
                         </button>
-                        <button onClick={() => deleteNote(note.id)} className="text-zinc-500 hover:text-red-500" aria-label={`Delete note ${note.title}`}>
+                        <button 
+                          onClick={() => startEditing(note)} 
+                          className="p-1 text-muted-foreground hover:text-primary"
+                          aria-label={`Edit note ${note.title}`}
+                        >
+                          <Edit3 className="h-3 w-3" />
+                        </button>
+                        <button 
+                          onClick={() => deleteNote(note.id)} 
+                          className="p-1 text-muted-foreground hover:text-destructive"
+                          aria-label={`Delete note ${note.title}`}
+                        >
                           <Trash2 className="h-3 w-3" />
                         </button>
                       </div>
                     </div>
-                    <p className="text-xs text-zinc-400 mt-1 line-clamp-2 cursor-pointer" onClick={() => startEditing(note)}>
+                    <p 
+                      className="text-xs text-muted-foreground mt-1 line-clamp-2 cursor-pointer" 
+                      onClick={() => startEditing(note)}
+                    >
                       {note.content || 'Click to edit note...'}
                     </p>
                     <div className="mt-2 flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-600 bg-zinc-950 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                         {note.category}
                       </span>
-                      <span className="text-[10px] text-zinc-600">
+                      <span className="text-[10px] text-muted-foreground">
                         {new Date(note.updatedAt).toLocaleDateString()}
                       </span>
                     </div>

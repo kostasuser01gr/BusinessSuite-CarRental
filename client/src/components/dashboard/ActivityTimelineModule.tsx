@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Activity as ActivityType } from '../../../../shared/types'
-import { LogIn, CheckCircle2, StickyNote, ShieldAlert } from 'lucide-react'
+import { LogIn, CheckCircle2, StickyNote, ShieldAlert, Zap, UserPlus } from 'lucide-react'
+import { cn } from '../../utils/cn'
 
 const ACTIVITIES: ActivityType[] = [
   { id: '1', time: '2 hours ago', text: 'New enterprise subscription created', user: 'Alice M.', type: 'system' },
@@ -12,33 +13,36 @@ const ACTIVITIES: ActivityType[] = [
 export function ActivityTimelineModule() {
   const getIcon = (type: ActivityType['type']) => {
     switch (type) {
-      case 'auth': return <ShieldAlert className="h-4 w-4 text-amber-500" />
-      case 'task': return <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-      case 'note': return <StickyNote className="h-4 w-4 text-blue-500" />
-      default: return <LogIn className="h-4 w-4 text-zinc-500" />
+      case 'auth': return <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
+      case 'task': return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+      case 'note': return <StickyNote className="h-3.5 w-3.5 text-primary" />
+      default: return <Zap className="h-3.5 w-3.5 text-muted-foreground" />
     }
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
+    <Card className="h-full bg-card border-border">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg font-bold tracking-tight">Recent Activity</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-6 relative before:absolute before:inset-0 before:left-2 before:h-full before:w-[1px] before:bg-zinc-800 before:content-['']">
+      <CardContent className="px-6">
+        <div className="space-y-8 relative before:absolute before:inset-0 before:left-[11px] before:h-full before:w-[1px] before:bg-border before:content-['']">
           {ACTIVITIES.map((activity) => (
-            <div key={activity.id} className="relative flex items-start gap-4 pl-6 group">
-              <div className="absolute left-0 top-1 mt-0.5 h-4 w-4 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center z-10">
+            <div key={activity.id} className="relative flex items-start gap-4 pl-8 group">
+              <div className="absolute left-0 top-1 h-[22px] w-[22px] rounded-full bg-background border border-border flex items-center justify-center z-10 shadow-sm group-hover:border-primary/50 transition-colors">
                 {getIcon(activity.type)}
               </div>
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-zinc-200 group-hover:text-blue-400 transition-colors">
+              <div className="flex flex-col gap-1.5 min-w-0">
+                <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-none">
                   {activity.text}
                 </p>
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
-                  <span className="font-medium">{activity.user}</span>
-                  <span>·</span>
-                  <span>{activity.time}</span>
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-1 font-medium bg-muted px-1.5 py-0.5 rounded">
+                    <UserPlus className="h-2.5 w-2.5" />
+                    <span>{activity.user}</span>
+                  </div>
+                  <span className="opacity-50">·</span>
+                  <span className="font-medium italic">{activity.time}</span>
                 </div>
               </div>
             </div>
