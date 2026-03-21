@@ -21,7 +21,7 @@ export function ActivityTimelineModule() {
   }
 
   return (
-    <Card className="h-full bg-card border-border">
+    <Card className="h-full bg-card border-border" data-testid="activity-timeline">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg font-bold tracking-tight">Recent Activity</CardTitle>
       </CardHeader>

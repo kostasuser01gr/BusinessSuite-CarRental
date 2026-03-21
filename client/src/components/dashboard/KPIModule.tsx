@@ -3,7 +3,7 @@ import { DollarSign, CheckCircle2, Zap, ShieldCheck, TrendingUp, Users } from "l
 
 export function KPIModule() {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-testid="kpi-container">
       <StatTile
         title="Revenue"
         value="$45,231"

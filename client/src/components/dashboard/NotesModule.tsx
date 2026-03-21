@@ -36,7 +36,7 @@ export function NotesModule() {
   const sortedNotes = [...notes].sort((a, b) => (a.pinned === b.pinned ? 0 : a.pinned ? -1 : 1))
 
   return (
-    <Card className="h-full">
+    <Card className="h-full" data-testid="notes-module">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle>Quick Notes</CardTitle>
         <Button variant="ghost" size="sm" onClick={handleAddNote} aria-label="Add new note">

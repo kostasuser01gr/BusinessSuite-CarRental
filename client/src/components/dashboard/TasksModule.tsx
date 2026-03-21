@@ -33,7 +33,7 @@ export function TasksModule() {
   }
 
   return (
-    <Card className="h-full">
+    <Card className="h-full" data-testid="tasks-module">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle>Pending Tasks</CardTitle>
       </CardHeader>

@@ -71,7 +71,7 @@ export function AssistantModule() {
   }
 
   return (
-    <Card className="flex flex-col h-full bg-card border-border overflow-hidden">
+    <Card className="flex flex-col h-full bg-card border-border overflow-hidden" data-testid="assistant-module">
       <CardHeader className="pb-2 border-b border-border bg-muted/30">
         <CardTitle className="flex items-center gap-2 text-primary text-sm font-bold">
           <Bot className="h-4 w-4" />
@@ -79,7 +79,7 @@ export function AssistantModule() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden pt-4 bg-background/50">
-        <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar" data-testid="assistant-messages">
           {messages.map((msg, i) => (
             <div 
               key={i} 
