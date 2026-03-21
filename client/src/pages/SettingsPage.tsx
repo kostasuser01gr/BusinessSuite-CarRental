@@ -20,7 +20,9 @@ import {
   Eye,
   EyeOff,
   GripVertical,
-  Navigation
+  Navigation,
+  Edit2,
+  Mail
 } from "lucide-react"
 
 export default function SettingsPage() {
@@ -328,22 +330,45 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Smartphone className="h-5 w-5 text-muted-foreground" />
-                  Trusted Devices
+                  Device Management
                 </CardTitle>
-                <CardDescription>Manage the devices where you are logged in.</CardDescription>
+                <CardDescription>Manage your trusted devices and active sessions.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/50 group shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <Laptop className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium text-foreground group-hover:text-primary transition-colors">MacBook Pro - Chrome</p>
-                      <p className="text-xs text-muted-foreground">Current session • San Francisco, CA</p>
-                    </div>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <h4 className="font-medium text-foreground">Remember this device</h4>
+                    <p className="text-sm text-muted-foreground">Stay logged in on this browser for 30 days.</p>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-emerald-500 font-medium bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                    <Check className="h-3 w-3" />
-                    Active
+                  <input 
+                    type="checkbox" 
+                    defaultChecked
+                    className="h-5 w-5 rounded border-border bg-background text-primary focus:ring-primary accent-primary transition-colors"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium text-foreground">Current Device Name</label>
+                  <div className="flex gap-2">
+                    <Input defaultValue="Admin's MacBook Pro" className="bg-background border-input focus:border-primary transition-colors shadow-sm" />
+                    <Button variant="outline">Rename</Button>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-border">
+                  <h4 className="text-sm font-semibold">Active Sessions</h4>
+                  <div className="flex items-center justify-between rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/50 group shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <Laptop className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium text-foreground group-hover:text-primary transition-colors">MacBook Pro - Chrome</p>
+                        <p className="text-xs text-muted-foreground">Current session • San Francisco, CA</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-emerald-500 font-medium bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                      <Check className="h-3 w-3" />
+                      Active
+                    </div>
                   </div>
                 </div>
               </CardContent>
