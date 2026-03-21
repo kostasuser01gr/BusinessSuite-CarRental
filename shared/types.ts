@@ -1,7 +1,15 @@
+export interface WebAuthnCredential {
+  id: string;
+  publicKey: string;
+  counter: number;
+  transports?: string[];
+}
+
 export interface User { 
   id: string; 
   email: string; 
   name: string; 
+  credentials?: WebAuthnCredential[];
 }
 
 export type TaskPriority = 'low' | 'medium' | 'high';

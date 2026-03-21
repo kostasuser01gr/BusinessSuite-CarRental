@@ -54,4 +54,30 @@ router.get('/me', requireAuth, async (req, res) => {
   res.json(req.user)
 })
 
+// WebAuthn Scaffolding
+router.post('/webauthn/register-options', requireAuth, async (req, res) => {
+  // Architectural placeholder: return options for navigator.credentials.create()
+  res.json({
+    challenge: 'mock-challenge',
+    rp: { name: 'AdaptiveAI' },
+    user: { id: req.user?.id, name: req.user?.email, displayName: req.user?.name },
+    pubKeyCredParams: [{ type: 'public-key', alg: -7 }]
+  })
+})
+
+router.post('/webauthn/register-verify', requireAuth, async (req, res) => {
+  // Architectural placeholder: verify the credential
+  res.json({ success: true, message: 'Credential registered (mock verification)' })
+})
+
+router.post('/webauthn/login-options', async (req, res) => {
+  // Architectural placeholder: return options for navigator.credentials.get()
+  res.json({ challenge: 'mock-challenge', timeout: 60000 })
+})
+
+router.post('/webauthn/login-verify', async (req, res) => {
+  // Architectural placeholder: verify the login
+  res.json({ success: true, user: { id: '1', name: 'Mock User', email: 'mock@example.com' } })
+})
+
 export default router

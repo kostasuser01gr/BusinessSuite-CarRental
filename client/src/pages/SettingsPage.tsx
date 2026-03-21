@@ -28,7 +28,7 @@ import {
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general")
   const { isInstallable, installApp } = usePWA()
-  const { isSupported, isPlatformAuthenticatorAvailable, registerCredential } = useWebAuthn()
+  const { isSupported, isPlatformAuthenticatorAvailable, registerCredential, loading: webAuthnLoading } = useWebAuthn()
   
   const { 
     theme, setTheme, 
@@ -317,8 +317,21 @@ export default function SettingsPage() {
                           </p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" onClick={registerCredential} className="border-border hover:bg-accent shadow-sm">
-                        Setup
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={async () => {
+                          try {
+                            const res = await registerCredential();
+                            if (res.success) alert('Passkey registered successfully (Architectural Flow)');
+                          } catch (e: any) {
+                            alert(e.message);
+                          }
+                        }} 
+                        className="border-border hover:bg-accent shadow-sm"
+                        disabled={webAuthnLoading}
+                      >
+                        {webAuthnLoading ? 'Processing...' : 'Setup'}
                       </Button>
                     </div>
                   </div>
