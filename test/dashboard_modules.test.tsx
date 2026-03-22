@@ -109,11 +109,7 @@ describe('Dashboard Core Modules - Verification Suite', () => {
       const addButton = await screen.findByLabelText(/Add new note/i)
       fireEvent.click(addButton)
       
-      // Click edit on the newly added note
-      const editBtn = await screen.findByLabelText(/Edit note New Note/i)
-      fireEvent.click(editBtn)
-
-      const titleInput = screen.getByLabelText(/Edit note title input/i)
+      const titleInput = await screen.findByLabelText(/Edit note title input/i)
       const contentInput = screen.getByLabelText(/Edit note content textarea/i)
       fireEvent.change(titleInput, { target: { value: 'Dev Note' } })
       fireEvent.change(contentInput, { target: { value: 'Ready for deploy' } })

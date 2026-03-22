@@ -83,7 +83,7 @@ export function NotesModule() {
             <div className="space-y-3">
               {[1, 2].map(i => <Skeleton key={i} className="h-24 w-full" />)}
             </div>
-          ) : notes.length === 0 ? (
+          ) : sortedNotes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">
               No notes yet. Capture your thoughts!
             </div>

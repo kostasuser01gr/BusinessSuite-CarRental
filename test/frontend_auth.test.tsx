@@ -32,7 +32,7 @@ describe('Frontend Auth Flow', () => {
     })
   })
 
-  it('renders login page correctly', () => {
+  it('renders login page correctly', async () => {
     render(
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
@@ -44,6 +44,10 @@ describe('Frontend Auth Flow', () => {
         </ToastProvider>
       </QueryClientProvider>
     )
+
+    await waitFor(() => {
+      expect(api.apiFetch).toHaveBeenCalledWith('/api/auth/me')
+    })
     
     expect(screen.getByText(/Welcome back/i)).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/name@company.com/i)).toBeInTheDocument()
@@ -79,7 +83,7 @@ describe('Frontend Auth Flow', () => {
     })
   })
 
-  it('renders signup page correctly', () => {
+  it('renders signup page correctly', async () => {
     render(
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
@@ -91,6 +95,10 @@ describe('Frontend Auth Flow', () => {
         </ToastProvider>
       </QueryClientProvider>
     )
+
+    await waitFor(() => {
+      expect(api.apiFetch).toHaveBeenCalledWith('/api/auth/me')
+    })
     
     expect(screen.getByRole('heading', { name: /Create account/i })).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/John Doe/i)).toBeInTheDocument()
