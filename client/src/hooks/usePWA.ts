@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useToast } from '../providers/ToastProvider';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -12,39 +13,40 @@ interface BeforeInstallPromptEvent extends Event {
 export function usePWA() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
+  const { addToast } = useToast();
 
   useEffect(() => {
     const handler = (e: Event) => {
-      // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      // Stash the event so it can be triggered later.
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
+      addToast('AdaptiveAI is ready to be installed for offline use', 'info', 5000);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
+    // Check if app is already installed or running as standalone
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstallable(false);
+    }
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
     };
-  }, []);
+  }, [addToast]);
 
   const installApp = async () => {
     if (!deferredPrompt) return;
 
-    // Show the install prompt
     deferredPrompt.prompt();
-
-    // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
+      addToast('Installing AdaptiveAI Suite...', 'success');
     } else {
-      console.log('User dismissed the install prompt');
+      addToast('Installation cancelled', 'warning');
     }
 
-    // We've used the prompt, and can't use it again, throw it away
     setDeferredPrompt(null);
     setIsInstallable(false);
   };

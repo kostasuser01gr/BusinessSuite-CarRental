@@ -1,13 +1,19 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('AdaptiveAI Business Suite - Core Flows', () => {
-  const testUser = {
-    name: 'E2E Tester',
-    email: `test-${Date.now()}@example.com`,
-    password: 'password123'
-  };
+
+  test.beforeEach(({ page }) => {
+    page.on('console', msg => console.log('BROWSER CONSOLE:', msg.text()));
+    page.on('pageerror', error => console.error('BROWSER ERROR:', error.message));
+  });
 
   test('full user journey: signup -> dashboard tasks/notes -> logout', async ({ page }) => {
+    const testUser = {
+      name: 'E2E Tester',
+      email: `test-${Date.now()}-${Math.random().toString(36).substring(7)}@example.com`,
+      password: 'password123'
+    };
+
     // 1. Signup
     await page.goto('/signup');
     await page.fill('input[id="name"]', testUser.name);
@@ -19,7 +25,8 @@ test.describe('AdaptiveAI Business Suite - Core Flows', () => {
 
     // 2. Dashboard Verification
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
-    await expect(page.locator('text=E2E Tester')).toBeVisible();
+    // Use more specific locator for greeting
+    await expect(page.locator('h1:has-text("Good morning")')).toContainText(testUser.name);
 
     // 3. Task Interaction
     const newTaskTitle = 'Verify Production Readiness';
@@ -80,7 +87,7 @@ test.describe('AdaptiveAI Business Suite - Core Flows', () => {
 
     // Verification
     await expect(page).toHaveURL(/\/dashboard/);
-    await expect(page.locator(`text=${loginUser.name}`)).toBeVisible();
+    await expect(page.locator('h1:has-text("Good morning")')).toContainText(loginUser.name);
   });
 
   test('unauthorized users are redirected to login', async ({ page }) => {

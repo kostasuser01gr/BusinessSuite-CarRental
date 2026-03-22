@@ -1,24 +1,46 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Badge } from '../ui/Badge'
 import { CheckCircle2, Clock, Plus, Trash2, Edit2, Check, Calendar } from 'lucide-react'
-import { useOperations } from '../../providers/OperationsProvider'
 import { cn } from '../../utils/cn'
 import { Task } from '../../../../shared/types'
+import { animateStaggeredReveal, animatePulse } from '../../animations'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { taskSchema, TaskInput } from '../../../../shared/schemas'
+import { useTasks } from '../../hooks/useTasks'
+import { Skeleton } from '../ui/Skeleton'
+import { EmptyState } from '../ui/EmptyState'
+import { useOnboarding } from '../../providers/OnboardingProvider'
 
 export function TasksModule() {
-  const { tasks, addTask, toggleTask, deleteTask, updateTask } = useOperations()
-  const [newTaskTitle, setNewTaskTitle] = useState('')
+  const { tasks, addTask, toggleTask, deleteTask, updateTask, isLoading, isAdding } = useTasks()
+  const { isActive, step, isWaitingForAction, nextStep } = useOnboarding()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
+  const listRef = useRef<HTMLDivElement>(null)
 
-  const handleAddTask = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newTaskTitle.trim()) return
-    addTask(newTaskTitle)
-    setNewTaskTitle('')
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<TaskInput>({
+    resolver: zodResolver(taskSchema),
+  })
+
+  useEffect(() => {
+    if (listRef.current && tasks.length > 0 && !isLoading) {
+      const items = listRef.current.querySelectorAll('.task-item-animate')
+      animateStaggeredReveal(items, 30)
+    }
+  }, [tasks.length, isLoading])
+
+  const onAddTask = (data: TaskInput) => {
+    addTask(data.title)
+    reset()
+    
+    // If onboarding is active and waiting for a task to be added
+    if (isActive && isWaitingForAction && step === 4) {
+      nextStep()
+    }
   }
 
   const startEditing = (task: Task) => {
@@ -28,38 +50,72 @@ export function TasksModule() {
 
   const saveEdit = () => {
     if (!editingId) return
-    updateTask(editingId, editTitle)
+    if (editTitle.trim()) {
+      updateTask({ id: editingId, title: editTitle })
+    }
     setEditingId(null)
   }
 
   return (
-    <Card className="h-full" data-testid="tasks-module">
+    <Card className="h-full" data-testid="tasks-module" data-tour="tasks-module">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle>Pending Tasks</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleAddTask} className="flex gap-2 mb-4 mt-2">
-          <Input 
-            placeholder="Add new task..." 
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            className="bg-background border-input"
-          />
-          <Button type="submit" size="icon" variant="outline" aria-label="Add task submit">
-            <Plus className="h-4 w-4" />
-          </Button>
+        <form onSubmit={handleSubmit(onAddTask)} className="flex flex-col gap-1 mb-4 mt-2">
+          <div className="flex gap-2">
+            <Input 
+              placeholder="Add new task..." 
+              className={cn("bg-background border-input", errors.title && "border-destructive")}
+              {...register('title')}
+              disabled={isAdding}
+            />
+            <Button 
+              type="submit" 
+              size="icon" 
+              variant="outline" 
+              aria-label="Add task submit"
+              onClick={(e) => animatePulse(e.currentTarget)}
+              disabled={isAdding}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          {errors.title && <span className="text-xs text-destructive">{errors.title.message}</span>}
         </form>
 
-        <div className="space-y-3">
-          {tasks.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              No tasks found. Relax or add some!
+        <div className="space-y-3" ref={listRef}>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/4" />
+                  </div>
+                </div>
+              ))}
             </div>
+          ) : tasks.length === 0 ? (
+            <EmptyState 
+              title="All caught up!"
+              description="You have no pending tasks. Enjoy your productivity or add a new goal above."
+              illustration="empty-tasks"
+              className="py-12"
+            />
           ) : (
             tasks.map((task) => (
-              <div key={task.id} className="flex items-center gap-3 group" data-testid={`task-item-${task.id}`}>
+              <div 
+                key={task.id} 
+                className="task-item-animate flex items-center gap-3 group opacity-0" 
+                data-testid={`task-item-${task.id}`}
+              >
                 <button 
-                  onClick={() => toggleTask(task.id)} 
+                  onClick={(e) => {
+                    animatePulse(e.currentTarget);
+                    toggleTask(task.id);
+                  }} 
                   className="shrink-0"
                   aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
                 >
@@ -82,7 +138,7 @@ export function TasksModule() {
                         className="h-7 text-sm py-0 bg-background border-primary"
                         aria-label="Edit task title input"
                       />
-                      <button onClick={saveEdit} className="text-emerald-500" aria-label="Save task title">
+                      <button onClick={(e) => { animatePulse(e.currentTarget); saveEdit(); }} className="text-emerald-500" aria-label="Save task title">
                         <Check className="h-4 w-4" />
                       </button>
                     </div>
@@ -117,14 +173,14 @@ export function TasksModule() {
                     </Badge>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
-                        onClick={() => startEditing(task)}
+                        onClick={(e) => { animatePulse(e.currentTarget); startEditing(task); }}
                         className="text-muted-foreground hover:text-primary"
                         aria-label={`Edit task ${task.title}`}
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button 
-                        onClick={() => deleteTask(task.id)}
+                        onClick={(e) => { animatePulse(e.currentTarget); deleteTask(task.id); }}
                         className="text-muted-foreground hover:text-destructive"
                         aria-label={`Delete task ${task.title}`}
                       >

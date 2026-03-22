@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import copilotRoutes from './copilot.js'
 
 const router = Router();
 
@@ -10,5 +11,7 @@ router.get('/ping', requireAuth, (req, res) => {
     user: req.user
   });
 });
+
+router.use('/copilot', requireAuth, copilotRoutes)
 
 export default router;

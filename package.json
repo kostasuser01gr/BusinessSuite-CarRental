@@ -20,7 +20,10 @@
     "verify": "bash scripts/verify.sh"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@tanstack/react-query": "^5.91.3",
     "@types/react-router-dom": "^5.3.3",
+    "animejs": "^4.3.6",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -36,6 +39,7 @@
     "pg": "^8.12.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-hook-form": "^7.71.2",
     "react-router-dom": "^7.13.1",
     "tailwind-merge": "^2.5.2",
     "ws": "^8.18.0",

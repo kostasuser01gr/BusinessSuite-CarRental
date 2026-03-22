@@ -1,9 +1,10 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "../../utils/cn"
+import { Loader2 } from "lucide-react"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 active:scale-95",
   {
     variants: {
       variant: {
@@ -32,16 +33,25 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  loading?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, loading = false, children, ...props }, ref) => {
     return (
       <button
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size, className }), loading && "relative text-transparent transition-none hover:text-transparent")}
         ref={ref}
+        disabled={loading || props.disabled}
         {...props}
-      />
+      >
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center text-current">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        )}
+        {children}
+      </button>
     )
   }
 )

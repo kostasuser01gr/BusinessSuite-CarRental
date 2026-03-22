@@ -7,6 +7,8 @@ import { useState } from "react"
 import { usePWA } from "../hooks/usePWA"
 import { useWebAuthn } from "../hooks/useWebAuthn"
 import { usePreferences, Theme, Density } from "../providers/PreferencesProvider"
+import { useAuditLogs } from "../hooks/useAuditLogs"
+import { useAuth } from "../providers/AuthProvider"
 import { 
   Laptop, 
   Smartphone, 
@@ -21,25 +23,40 @@ import {
   EyeOff,
   GripVertical,
   Navigation,
-  Edit2,
-  Mail
+  Keyboard,
+  ShieldAlert,
+  Search,
+  User as UserIcon,
+  Shield
 } from "lucide-react"
+import { cn } from "../utils/cn"
+import { Skeleton } from "../components/ui/Skeleton"
+import { Badge } from "../components/ui/Badge"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general")
   const { isInstallable, installApp } = usePWA()
   const { isSupported, isPlatformAuthenticatorAvailable, registerCredential, loading: webAuthnLoading } = useWebAuthn()
+  const { data: auditLogs, isLoading: auditLoading } = useAuditLogs()
+  const { user, setUser } = useAuth()
   
   const { 
     theme, setTheme, 
     density, setDensity, 
     widgets, setWidgets,
     landingPage, setLandingPage,
-    notifications, setNotifications
+    notifications, setNotifications,
+    shortcutsEnabled, setShortcutsEnabled
   } = usePreferences()
 
   const toggleWidget = (id: string) => {
     setWidgets(widgets.map(w => w.id === id ? { ...w, visible: !w.visible } : w))
+  }
+
+  const switchRole = (role: string) => {
+    if (user) {
+      setUser({ ...user, role: role as any })
+    }
   }
 
   const getWidgetName = (id: string) => {
@@ -49,6 +66,7 @@ export default function SettingsPage() {
       case 'notes': return 'Quick Notes'
       case 'assistant': return 'AI Assistant'
       case 'timeline': return 'Activity Timeline'
+      case 'insights': return 'AI Insights'
       default: return id
     }
   }
@@ -77,6 +95,9 @@ export default function SettingsPage() {
           <TabsTrigger active={activeTab === "security"} onClick={() => setActiveTab("security")}>
             Security & Devices
           </TabsTrigger>
+          <TabsTrigger active={activeTab === "audit"} onClick={() => setActiveTab("audit")}>
+            Audit Logs
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent active={activeTab === "general"}>
@@ -89,16 +110,64 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
                   <label className="text-sm font-medium text-foreground">Name</label>
-                  <Input defaultValue="Admin User" className="bg-background border-input focus:border-primary transition-colors" />
+                  <Input defaultValue={user?.name} className="bg-background border-input focus:border-primary transition-colors" />
                 </div>
                 <div className="grid gap-2">
                   <label className="text-sm font-medium text-foreground">Email</label>
-                  <Input defaultValue="admin@adaptiveai.com" type="email" className="bg-background border-input focus:border-primary transition-colors" />
+                  <Input defaultValue={user?.email} type="email" className="bg-background border-input focus:border-primary transition-colors" />
                 </div>
               </CardContent>
               <CardFooter className="border-t border-border px-6 py-4">
                 <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Save Changes</Button>
               </CardFooter>
+            </Card>
+
+            <Card className="border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  Role Emulation (ABAC Testing)
+                </CardTitle>
+                <CardDescription>Switch roles to test Attribute-Based Access Control logic.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {['admin', 'manager', 'technician', 'viewer'].map((r) => (
+                    <Button 
+                      key={r} 
+                      variant={user?.role === r ? "default" : "outline"}
+                      className="capitalize h-9 text-xs font-bold"
+                      onClick={() => switchRole(r)}
+                    >
+                      {r}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border bg-card shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Keyboard className="h-5 w-5 text-primary" />
+                  Shortcuts & Accessibility
+                </CardTitle>
+                <CardDescription>Configure keyboard-driven productivity tools.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-foreground text-sm">Keyboard Shortcuts</h4>
+                    <p className="text-xs text-muted-foreground">Enable global hotkeys like Cmd+K and '?'.</p>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={shortcutsEnabled}
+                    onChange={(e) => setShortcutsEnabled(e.target.checked)}
+                    className="h-5 w-5 rounded border-border bg-background text-primary focus:ring-primary accent-primary transition-colors"
+                  />
+                </div>
+              </CardContent>
             </Card>
 
             <Card className="border-border bg-card shadow-sm">
@@ -120,30 +189,13 @@ export default function SettingsPage() {
                     <option value="/dashboard">Dashboard</option>
                     <option value="/customers">Customers</option>
                     <option value="/bookings">Bookings</option>
+                    <option value="/assets">Fleet & Assets</option>
+                    <option value="/knowledge">Knowledge</option>
                     <option value="/workspace">Workspace</option>
                   </select>
                 </div>
               </CardContent>
             </Card>
-
-            {isInstallable && (
-              <Card className="border-primary/20 bg-primary/5">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Download className="h-5 w-5 text-primary" />
-                    Install Desktop App
-                  </CardTitle>
-                  <CardDescription>
-                    Install AdaptiveAI Business Suite to your device for a faster, native-like experience.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={installApp} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                    Install Now
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </TabsContent>
 
@@ -412,6 +464,70 @@ export default function SettingsPage() {
               </CardFooter>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent active={activeTab === "audit"}>
+          <Card className="border-border bg-card shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldAlert className="h-5 w-5 text-primary" />
+                  Security Audit Ledger
+                </CardTitle>
+                <CardDescription>Immutable record of all critical system actions.</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-8 gap-2">
+                  <Download className="h-3.5 w-3.5" /> Export PDF
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-xl border border-border bg-background overflow-hidden shadow-inner">
+                <div className="grid grid-cols-12 gap-4 p-3 bg-muted/50 border-b border-border text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  <div className="col-span-3">Timestamp</div>
+                  <div className="col-span-2">Actor</div>
+                  <div className="col-span-2">Action</div>
+                  <div className="col-span-3">Entity</div>
+                  <div className="col-span-2">Origin</div>
+                </div>
+                <div className="divide-y divide-border max-h-[500px] overflow-y-auto custom-scrollbar">
+                  {auditLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => <div key={i} className="p-4"><Skeleton className="h-4 w-full" /></div>)
+                  ) : auditLogs?.map((log) => (
+                    <div key={log.id} className="grid grid-cols-12 gap-4 p-4 text-xs items-center group hover:bg-muted/30 transition-colors">
+                      <div className="col-span-3 text-muted-foreground font-mono">{new Date(log.timestamp).toLocaleString()}</div>
+                      <div className="col-span-2 flex items-center gap-2">
+                        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-[8px] font-bold text-primary uppercase">
+                          {log.actor.charAt(0)}
+                        </div>
+                        <span className="font-semibold truncate">{log.actor}</span>
+                      </div>
+                      <div className="col-span-2">
+                        <Badge variant={log.action === 'DELETE' ? 'destructive' : log.action === 'CREATE' ? 'success' : 'secondary'} className="text-[9px] font-black tracking-tighter">
+                          {log.action}
+                        </Badge>
+                      </div>
+                      <div className="col-span-3">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-foreground">{log.entityType}</span>
+                          <span className="text-[9px] text-muted-foreground font-mono uppercase">{log.entityId}</span>
+                        </div>
+                      </div>
+                      <div className="col-span-2 text-muted-foreground font-mono">{log.ip}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="bg-muted/20 border-t border-border px-6 py-4 flex items-center justify-between">
+              <p className="text-[10px] text-muted-foreground">Showing last 100 security events.</p>
+              <div className="flex items-center gap-2">
+                <Search className="h-3 w-3 text-muted-foreground" />
+                <span className="text-[10px] font-bold text-primary cursor-pointer hover:underline">View Advanced Analytics</span>
+              </div>
+            </CardFooter>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

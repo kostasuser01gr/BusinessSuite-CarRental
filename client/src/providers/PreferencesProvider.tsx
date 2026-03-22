@@ -34,6 +34,8 @@ interface PreferencesContextType {
   setLandingPage: (page: string) => void;
   notifications: NotificationPreferences;
   setNotifications: (prefs: NotificationPreferences) => void;
+  shortcutsEnabled: boolean;
+  setShortcutsEnabled: (enabled: boolean) => void;
 }
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
@@ -77,6 +79,11 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     return { email: true, push: false, security: true };
   });
 
+  const [shortcutsEnabled, setShortcutsEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem('adaptive_shortcuts_enabled');
+    return saved === null ? true : saved === 'true';
+  });
+
   useEffect(() => {
     localStorage.setItem('adaptive_theme', theme);
     if (theme === 'dark' || (theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)) {
@@ -103,13 +110,18 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('adaptive_notifications', JSON.stringify(notifications));
   }, [notifications]);
 
+  useEffect(() => {
+    localStorage.setItem('adaptive_shortcuts_enabled', String(shortcutsEnabled));
+  }, [shortcutsEnabled]);
+
   return (
     <PreferencesContext.Provider value={{ 
       theme, setTheme, 
       density, setDensity, 
       widgets, setWidgets,
       landingPage, setLandingPage,
-      notifications, setNotifications
+      notifications, setNotifications,
+      shortcutsEnabled, setShortcutsEnabled
     }}>
       {children}
     </PreferencesContext.Provider>

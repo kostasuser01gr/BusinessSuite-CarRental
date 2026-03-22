@@ -1,54 +1,68 @@
-import { useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../providers/AuthProvider'
 import { apiFetch } from '../lib/api'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card'
-import { signupSchema } from '../../../shared/schemas'
+import { SignupInput } from '../../../shared/schemas'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
+import { animateFadeInUp, animateHoverLift, animatePress } from '../animations'
+import { useToast } from '../providers/ToastProvider'
+import { signupFormSchema, SignupFormInput } from '../schemas/auth'
 
 export default function SignupPage() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
   const { setUser } = useAuth()
+  const { addToast } = useToast()
   const navigate = useNavigate()
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignupFormInput>({
+    resolver: zodResolver(signupFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  })
 
-    const result = signupSchema.safeParse({ name, email, password })
-    if (!result.success) {
-      setError(result.error.errors[0].message)
-      return
-    }
-
-    setLoading(true)
-    try {
-      const userData = await apiFetch('/api/auth/signup', {
+  const signupMutation = useMutation({
+    mutationFn: async (data: SignupInput) => {
+      return apiFetch('/api/auth/signup', {
         method: 'POST',
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify(data),
       })
+    },
+    onSuccess: (userData) => {
       setUser(userData)
+      addToast(`Account created! Welcome, ${userData.name}.`, 'success')
       navigate('/dashboard')
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign up')
-    } finally {
-      setLoading(false)
+    },
+    onError: (error: any) => {
+      addToast(error.message || 'Failed to sign up', 'error')
     }
+  })
+
+  useEffect(() => {
+    if (containerRef.current) {
+      animateFadeInUp(containerRef.current)
+    }
+  }, [])
+
+  const onSubmit = (data: SignupFormInput) => {
+    const { confirmPassword, ...signupData } = data;
+    signupMutation.mutate(signupData)
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4 font-sans">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 font-sans opacity-0" ref={containerRef}>
       <Card className="w-full max-w-md border-border bg-card shadow-2xl shadow-primary/10">
         <CardHeader className="space-y-2 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-primary font-bold text-primary-foreground mb-4 shadow-lg shadow-primary/20 transition-transform hover:scale-110 duration-300">
@@ -59,13 +73,8 @@ export default function SignupPage() {
             Enter your details below to create your account
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <CardContent className="space-y-4">
-            {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20 animate-in fade-in zoom-in duration-200">
-                {error}
-              </div>
-            )}
             <div className="space-y-2">
               <label className="text-sm font-medium leading-none text-foreground" htmlFor="name">
                 Name
@@ -74,11 +83,12 @@ export default function SignupPage() {
                 id="name"
                 type="text"
                 placeholder="John Doe"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
                 className="bg-background border-input focus:border-primary transition-colors"
+                autoComplete="name"
+                aria-invalid={Boolean(errors.name)}
+                {...register('name')}
               />
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium leading-none text-foreground" htmlFor="email">
@@ -88,11 +98,12 @@ export default function SignupPage() {
                 id="email"
                 type="email"
                 placeholder="name@company.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 className="bg-background border-input focus:border-primary transition-colors"
+                autoComplete="email"
+                aria-invalid={Boolean(errors.email)}
+                {...register('email')}
               />
+              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium leading-none text-foreground" htmlFor="password">
@@ -101,11 +112,12 @@ export default function SignupPage() {
               <Input
                 id="password"
                 type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 className="bg-background border-input focus:border-primary transition-colors"
+                autoComplete="new-password"
+                aria-invalid={Boolean(errors.password)}
+                {...register('password')}
               />
+              {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium leading-none text-foreground" htmlFor="confirmPassword">
@@ -114,16 +126,27 @@ export default function SignupPage() {
               <Input
                 id="confirmPassword"
                 type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="bg-background border-input focus:border-primary transition-colors"
+                autoComplete="new-password"
+                aria-invalid={Boolean(errors.confirmPassword)}
+                {...register('confirmPassword')}
               />
+              {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-[0.98]" type="submit" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create account'}
+            <Button 
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-[0.98]" 
+              type="submit" 
+              loading={signupMutation.isPending}
+              disabled={signupMutation.isPending}
+              onClick={(e) => {
+                animatePress(e.currentTarget)
+              }}
+              onMouseEnter={(e) => animateHoverLift(e.currentTarget, true)}
+              onMouseLeave={(e) => animateHoverLift(e.currentTarget, false)}
+            >
+              {signupMutation.isPending ? 'Creating account...' : 'Create account'}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{' '}

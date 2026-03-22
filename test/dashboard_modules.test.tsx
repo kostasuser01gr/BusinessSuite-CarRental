@@ -1,71 +1,116 @@
-import { render, screen, fireEvent, within } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { TasksModule } from '../client/src/components/dashboard/TasksModule'
 import { NotesModule } from '../client/src/components/dashboard/NotesModule'
-import { OperationsProvider } from '../client/src/providers/OperationsProvider'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ToastProvider } from '../client/src/providers/ToastProvider'
+import { OnboardingProvider } from '../client/src/providers/OnboardingProvider'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      gcTime: 0,
+    },
+  },
+})
 
 describe('Dashboard Core Modules - Verification Suite', () => {
+  beforeEach(() => {
+    queryClient.clear()
+    localStorage.clear()
+    vi.clearAllMocks()
+  })
+
   describe('TasksModule', () => {
-    it('allows adding, completing, and editing a task', () => {
+    it('allows adding, completing, and editing a task', async () => {
       render(
-        <OperationsProvider>
-          <TasksModule />
-        </OperationsProvider>
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <OnboardingProvider>
+              <TasksModule />
+            </OnboardingProvider>
+          </ToastProvider>
+        </QueryClientProvider>
       )
       
+      // Wait for initial load (skeletons gone)
+      await waitFor(() => {
+        expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument()
+      }, { timeout: 3000 })
+
       // 1. Add
       const input = screen.getByPlaceholderText(/Add new task/i)
       const addButton = screen.getByLabelText(/Add task submit/i)
       fireEvent.change(input, { target: { value: 'Verification Task' } })
       fireEvent.click(addButton)
       
-      const taskText = screen.getByText('Verification Task')
+      const taskText = await screen.findByText('Verification Task')
       expect(taskText).toBeInTheDocument()
+
       const taskItem = taskText.closest('[data-testid^="task-item-"]')
 
       // 2. Edit
       fireEvent.click(taskText) // Enters edit mode
-      const editInput = within(taskItem as HTMLElement).getByLabelText(/Edit task title input/i)
+      const editInput = await within(taskItem as HTMLElement).findByLabelText(/Edit task title input/i)
       fireEvent.change(editInput, { target: { value: 'Verified Task' } })
-      const saveBtn = within(taskItem as HTMLElement).getByLabelText(/Save task title/i)
-      fireEvent.click(saveBtn)
-      expect(screen.getByText('Verified Task')).toBeInTheDocument()
+      fireEvent.keyDown(editInput, { key: 'Enter' })
+      
+      await waitFor(() => {
+        expect(screen.getByText('Verified Task')).toBeInTheDocument()
+      })
 
       // 3. Complete
       const completeBtn = within(taskItem as HTMLElement).getByLabelText(/Mark as complete/i)
       fireEvent.click(completeBtn)
-      expect(screen.getByText('Verified Task')).toHaveClass('line-through')
+      await waitFor(() => {
+        expect(screen.getByText('Verified Task')).toHaveClass('line-through')
+      })
     })
 
-    it('allows deleting a task', () => {
+    it('allows deleting a task', async () => {
+      // Set initial data in localStorage since the hook reads from it
+      const initialTasks = [{ id: '1', title: 'Review Q4 roadmap', completed: false, priority: 'high', createdAt: new Date().toISOString() }]
+      localStorage.setItem('tasks', JSON.stringify(initialTasks))
+
       render(
-        <OperationsProvider>
-          <TasksModule />
-        </OperationsProvider>
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <OnboardingProvider>
+              <TasksModule />
+            </OnboardingProvider>
+          </ToastProvider>
+        </QueryClientProvider>
       )
-      const taskTitle = 'Review Q4 roadmap'
-      expect(screen.getByText(taskTitle)).toBeInTheDocument()
+
+      const taskTitle = await screen.findByText('Review Q4 roadmap')
+      expect(taskTitle).toBeInTheDocument()
       
-      const deleteBtn = screen.getByLabelText(`Delete task ${taskTitle}`)
+      const deleteBtn = screen.getByLabelText(`Delete task Review Q4 roadmap`)
       fireEvent.click(deleteBtn)
-      expect(screen.queryByText(taskTitle)).not.toBeInTheDocument()
+      
+      await waitFor(() => {
+        expect(screen.queryByText('Review Q4 roadmap')).not.toBeInTheDocument()
+      })
     })
   })
 
   describe('NotesModule', () => {
-    it('allows full note lifecycle: add, edit, pin, delete', () => {
+    it('allows full note lifecycle: add, edit, pin, delete', async () => {
       render(
-        <OperationsProvider>
-          <NotesModule />
-        </OperationsProvider>
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <NotesModule />
+          </ToastProvider>
+        </QueryClientProvider>
       )
       
       // 1. Add
-      const addButton = screen.getByLabelText(/Add new note/i)
+      const addButton = await screen.findByLabelText(/Add new note/i)
       fireEvent.click(addButton)
       
       // Click edit on the newly added note
-      const editBtn = screen.getByLabelText(/Edit note New Note/i)
+      const editBtn = await screen.findByLabelText(/Edit note New Note/i)
       fireEvent.click(editBtn)
 
       const titleInput = screen.getByLabelText(/Edit note title input/i)
@@ -76,19 +121,24 @@ describe('Dashboard Core Modules - Verification Suite', () => {
       const saveBtn = screen.getByLabelText(/Save note changes/i)
       fireEvent.click(saveBtn)
       
-      expect(screen.getByText('Dev Note')).toBeInTheDocument()
-      expect(screen.getByText('Ready for deploy')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText('Dev Note')).toBeInTheDocument()
+        expect(screen.getByText('Ready for deploy')).toBeInTheDocument()
+      })
 
       // 2. Pin
       const pinBtn = screen.getByLabelText(/Pin note Dev Note/i)
       fireEvent.click(pinBtn)
-      // Visual check for pin state (text-primary class)
-      expect(pinBtn).toHaveClass('text-primary')
+      await waitFor(() => {
+        expect(pinBtn).toHaveClass('text-primary')
+      })
 
       // 3. Delete
       const deleteBtn = screen.getByLabelText(/Delete note Dev Note/i)
       fireEvent.click(deleteBtn)
-      expect(screen.queryByText('Dev Note')).not.toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.queryByText('Dev Note')).not.toBeInTheDocument()
+      })
     })
   })
 })

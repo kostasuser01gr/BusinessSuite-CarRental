@@ -1,0 +1,5 @@
+
+> adaptiveai-business-suite@1.0.0 dev:server
+> PORT=5000 tsx watch server/index.ts
+
+API listening on http://localhost:5000

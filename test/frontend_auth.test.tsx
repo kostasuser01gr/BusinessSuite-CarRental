@@ -2,12 +2,22 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '../client/src/providers/AuthProvider'
+import { ToastProvider } from '../client/src/providers/ToastProvider'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import LoginPage from '../client/src/pages/LoginPage'
 import SignupPage from '../client/src/pages/SignupPage'
 import * as api from '../client/src/lib/api'
 
 // Mock apiFetch
 vi.spyOn(api, 'apiFetch')
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+})
 
 describe('Frontend Auth Flow', () => {
   beforeEach(() => {
@@ -24,11 +34,15 @@ describe('Frontend Auth Flow', () => {
 
   it('renders login page correctly', () => {
     render(
-      <AuthProvider>
-        <BrowserRouter>
-          <LoginPage />
-        </BrowserRouter>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <LoginPage />
+            </BrowserRouter>
+          </AuthProvider>
+        </ToastProvider>
+      </QueryClientProvider>
     )
     
     expect(screen.getByText(/Welcome back/i)).toBeInTheDocument()
@@ -42,11 +56,15 @@ describe('Frontend Auth Flow', () => {
     api.apiFetch.mockResolvedValueOnce(mockUser)
 
     render(
-      <AuthProvider>
-        <BrowserRouter>
-          <LoginPage />
-        </BrowserRouter>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <LoginPage />
+            </BrowserRouter>
+          </AuthProvider>
+        </ToastProvider>
+      </QueryClientProvider>
     )
 
     fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'test@example.com' } })
@@ -63,11 +81,15 @@ describe('Frontend Auth Flow', () => {
 
   it('renders signup page correctly', () => {
     render(
-      <AuthProvider>
-        <BrowserRouter>
-          <SignupPage />
-        </BrowserRouter>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <SignupPage />
+            </BrowserRouter>
+          </AuthProvider>
+        </ToastProvider>
+      </QueryClientProvider>
     )
     
     expect(screen.getByRole('heading', { name: /Create account/i })).toBeInTheDocument()
@@ -81,11 +103,15 @@ describe('Frontend Auth Flow', () => {
     api.apiFetch.mockResolvedValueOnce(mockUser)
 
     render(
-      <AuthProvider>
-        <BrowserRouter>
-          <SignupPage />
-        </BrowserRouter>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <SignupPage />
+            </BrowserRouter>
+          </AuthProvider>
+        </ToastProvider>
+      </QueryClientProvider>
     )
 
     fireEvent.change(screen.getByLabelText(/Name/i), { target: { value: 'Test User' } })

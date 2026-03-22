@@ -1,9 +1,10 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
+import { cn } from "../utils/cn"
 import { SectionHeader } from "../components/ui/SectionHeader"
 import { Button } from "../components/ui/Button"
 import { Input } from "../components/ui/Input"
 import { Badge } from "../components/ui/Badge"
-import { Drawer } from "../components/ui/Drawer"
+import { Skeleton } from "../components/ui/Skeleton"
 import { 
   Table, 
   TableBody, 
@@ -17,142 +18,202 @@ import {
   Plus, 
   Calendar,
   Clock,
+  User,
   CheckCircle2,
   XCircle,
+  AlertCircle,
   MoreVertical,
-  Edit2,
-  Trash2,
-  User as UserIcon,
-  CreditCard
+  ArrowRight,
+  Filter,
+  DollarSign
 } from "lucide-react"
-import { Booking } from "../../../shared/types"
-
-const MOCK_BOOKINGS: Booking[] = [
-  { id: "BK-1001", customerId: "1", customerName: "Acme Corp", status: "confirmed", date: "2026-03-25", value: "$1,200.00", serviceType: "Fleet Support" },
-  { id: "BK-1002", customerId: "3", customerName: "Stark Industries", status: "pending", date: "2026-03-22", value: "$4,500.00", serviceType: "AI Integration" },
-  { id: "BK-1003", customerId: "2", customerName: "Global Tech", status: "completed", date: "2026-03-10", value: "$850.00", serviceType: "Consulting" },
-  { id: "BK-1004", customerId: "5", customerName: "Umbrella Corp", status: "cancelled", date: "2026-03-15", value: "$2,100.00", serviceType: "Maintenance" },
-  { id: "BK-1005", customerId: "1", customerName: "Acme Corp", status: "confirmed", date: "2026-04-01", value: "$1,200.00", serviceType: "Fleet Support" },
-]
+import { Booking, BookingStatus } from "../../../shared/types"
+import { useBookings } from "../hooks/useBookings"
+import { animatePulse } from "../animations"
 
 export default function BookingsPage() {
+  const { bookings, isLoading, createBooking, updateBookingStatus } = useBookings()
   const [searchTerm, setSearchTerm] = useState("")
-  const [bookings] = useState<Booking[]>(MOCK_BOOKINGS)
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const [drawerMode, setDrawerMode] = useState<'create' | 'edit' | 'view'>('view')
+  const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all')
 
-  const filteredBookings = bookings.filter(b => 
-    b.customerName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    b.id.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredBookings = useMemo(() => bookings.filter(b => {
+    const matchesSearch = b.customerName.toLowerCase().includes(searchTerm.toLowerCase()) || b.id.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || b.status === statusFilter
+    return matchesSearch && matchesStatus
+  }), [bookings, searchTerm, statusFilter])
 
-  const getStatusIcon = (status: Booking['status']) => {
+  const stats = useMemo(() => {
+    return {
+      pending: bookings.filter(b => b.status === 'pending').length,
+      confirmed: bookings.filter(b => b.status === 'confirmed').length,
+      revenue: bookings.reduce((acc, b) => acc + (b.status === 'completed' || b.status === 'confirmed' ? parseFloat(b.value.replace('$', '').replace(',', '')) : 0), 0)
+    }
+  }, [bookings])
+
+  const getStatusIcon = (status: BookingStatus) => {
     switch (status) {
-      case 'confirmed': return <CheckCircle2 className="h-4 w-4 text-primary" />
+      case 'confirmed': return <CheckCircle2 className="h-4 w-4 text-emerald-500" />
       case 'pending': return <Clock className="h-4 w-4 text-amber-500" />
-      case 'completed': return <CheckCircle2 className="h-4 w-4 text-emerald-500" />
       case 'cancelled': return <XCircle className="h-4 w-4 text-destructive" />
-      default: return null
+      case 'completed': return <CheckCircle2 className="h-4 w-4 text-primary" />
     }
   }
 
-  const getStatusVariant = (status: Booking['status']) => {
+  const getStatusVariant = (status: BookingStatus) => {
     switch (status) {
-      case 'confirmed': return 'secondary'
-      case 'pending': return 'outline'
-      case 'completed': return 'success'
+      case 'confirmed': return 'success'
+      case 'pending': return 'secondary'
       case 'cancelled': return 'destructive'
-      default: return 'secondary'
+      case 'completed': return 'default'
     }
-  }
-
-  const openDrawer = (booking: Booking | null, mode: 'create' | 'edit' | 'view') => {
-    setSelectedBooking(booking)
-    setDrawerMode(mode)
-    setIsDrawerOpen(true)
-  }
-
-  const closeDrawer = () => {
-    setIsDrawerOpen(false)
-    setSelectedBooking(null)
   }
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       <SectionHeader
-        title="Bookings"
-        description="Schedule and track service appointments."
+        title="Bookings & Dispatch"
+        description="Manage service schedules and resource allocation."
         action={
-          <Button className="gap-2" onClick={() => openDrawer(null, 'create')}>
+          <Button className="gap-2 shadow-lg shadow-primary/20" onClick={(e) => animatePulse(e.currentTarget)}>
             <Plus className="h-4 w-4" /> New Booking
           </Button>
         }
       />
 
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="bg-card border border-border p-4 rounded-xl flex items-center gap-4 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-primary/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+          <div className="p-3 bg-primary/10 rounded-lg text-primary z-10"><Calendar className="h-6 w-6" /></div>
+          <div className="z-10">
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Pending Dispatch</p>
+            <p className="text-2xl font-black">{stats.pending}</p>
+          </div>
+        </div>
+        <div className="bg-card border border-border p-4 rounded-xl flex items-center gap-4 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-emerald-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+          <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-500 z-10"><CheckCircle2 className="h-6 w-6" /></div>
+          <div className="z-10">
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Confirmed Today</p>
+            <p className="text-2xl font-black">{stats.confirmed}</p>
+          </div>
+        </div>
+        <div className="bg-card border border-border p-4 rounded-xl flex items-center gap-4 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-amber-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+          <div className="p-3 bg-amber-500/10 rounded-lg text-amber-500 z-10"><DollarSign className="h-6 w-6" /></div>
+          <div className="z-10">
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Pipeline Value</p>
+            <p className="text-2xl font-black">${stats.revenue.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search bookings..."
-            className="pl-9"
+            placeholder="Search customer or ID..."
+            className="pl-9 bg-background/50"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border border-border">
-          <Calendar className="h-4 w-4" />
-          <span>Next 30 days</span>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex p-1 bg-muted rounded-lg border border-border overflow-hidden">
+            {(['all', 'pending', 'confirmed', 'completed'] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={cn(
+                  "px-3 py-1.5 text-[10px] font-bold uppercase transition-all rounded-md",
+                  statusFilter === status ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <Table>
-          <TableHeader className="bg-muted/50">
+          <TableHeader className="bg-muted/30">
             <TableRow>
-              <TableHead className="w-[100px]">ID</TableHead>
+              <TableHead className="w-[150px]">Booking ID</TableHead>
               <TableHead>Customer</TableHead>
+              <TableHead>Date & Time</TableHead>
+              <TableHead>Service</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="hidden md:table-cell">Service</TableHead>
-              <TableHead className="hidden lg:table-cell">Date</TableHead>
               <TableHead className="text-right">Value</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredBookings.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-8 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
+                </TableRow>
+              ))
+            ) : filteredBookings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                  No bookings found.
+                <TableCell colSpan={7} className="h-48 text-center text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2">
+                    <AlertCircle className="h-8 w-8 opacity-20" />
+                    <p>No bookings found for the selected criteria.</p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
               filteredBookings.map((booking) => (
-                <TableRow key={booking.id} className="cursor-pointer group" onClick={() => openDrawer(booking, 'view')}>
-                  <TableCell className="font-mono text-xs font-medium text-primary">{booking.id}</TableCell>
-                  <TableCell className="font-medium text-foreground">{booking.customerName}</TableCell>
+                <TableRow key={booking.id} className="group hover:bg-muted/30 transition-colors">
+                  <TableCell className="font-mono text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{booking.id}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
+                        {booking.customerName.charAt(0)}
+                      </div>
+                      <span className="font-semibold text-sm">{booking.customerName}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{new Date(booking.date).toLocaleDateString()}</span>
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {new Date(booking.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-[10px] font-bold bg-muted/50 border-border">
+                      {booking.serviceType}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(booking.status)}
-                      <Badge variant={getStatusVariant(booking.status)} className="capitalize">
+                      <span className={cn(
+                        "text-[10px] font-bold uppercase",
+                        booking.status === 'confirmed' ? "text-emerald-500" : 
+                        booking.status === 'pending' ? "text-amber-500" : 
+                        booking.status === 'cancelled' ? "text-destructive" : "text-primary"
+                      )}>
                         {booking.status}
-                      </Badge>
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                    {booking.serviceType}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
-                    {new Date(booking.date).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold text-foreground">
-                    {booking.value}
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openDrawer(booking, 'edit')}>
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
+                  <TableCell className="text-right font-bold text-foreground">{booking.value}</TableCell>
+                  <TableCell>
+                    <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="p-1 rounded-md hover:bg-muted text-muted-foreground transition-colors">
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -161,114 +222,21 @@ export default function BookingsPage() {
           </TableBody>
         </Table>
       </div>
-
-      <Drawer
-        isOpen={isDrawerOpen}
-        onClose={closeDrawer}
-        title={drawerMode === 'create' ? 'New Booking' : drawerMode === 'edit' ? 'Edit Booking' : 'Booking Details'}
-        description="Appointment information and payment status."
-        footer={
-          drawerMode !== 'view' ? (
-            <div className="flex gap-3 justify-end">
-              <Button variant="outline" onClick={closeDrawer}>Cancel</Button>
-              <Button onClick={closeDrawer}>{drawerMode === 'create' ? 'Create Booking' : 'Save Changes'}</Button>
-            </div>
-          ) : (
-            <div className="flex gap-3 justify-end">
-              <Button variant="outline" className="gap-2" onClick={() => setDrawerMode('edit')}>
-                <Edit2 className="h-4 w-4" /> Edit
-              </Button>
-              <Button className="gap-2" variant="destructive">
-                <Trash2 className="h-4 w-4" /> Cancel Booking
-              </Button>
-            </div>
-          )
-        }
-      >
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Customer</label>
-              <div className="relative">
-                <UserIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  defaultValue={selectedBooking?.customerName || ''} 
-                  disabled={drawerMode === 'view'}
-                  placeholder="Select customer..."
-                  className="pl-9"
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Service Type</label>
-              <select 
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                defaultValue={selectedBooking?.serviceType || 'Fleet Support'}
-                disabled={drawerMode === 'view'}
-              >
-                <option value="Fleet Support">Fleet Support</option>
-                <option value="AI Integration">AI Integration</option>
-                <option value="Consulting">Consulting</option>
-                <option value="Maintenance">Maintenance</option>
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">Date</label>
-                <Input 
-                  type="date" 
-                  defaultValue={selectedBooking?.date || ''} 
-                  disabled={drawerMode === 'view'}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">Amount</label>
-                <div className="relative">
-                  <CreditCard className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    defaultValue={selectedBooking?.value || '$0.00'} 
-                    disabled={drawerMode === 'view'}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">Status</label>
-              <select 
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                defaultValue={selectedBooking?.status || 'pending'}
-                disabled={drawerMode === 'view'}
-              >
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
-
-          {drawerMode === 'view' && (
-            <div className="pt-6 border-t border-border">
-              <h3 className="text-sm font-semibold mb-4">Payment Summary</h3>
-              <div className="rounded-lg bg-muted p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>{selectedBooking?.value}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tax (0%)</span>
-                  <span>$0.00</span>
-                </div>
-                <div className="flex justify-between font-bold pt-2 border-t border-border">
-                  <span>Total</span>
-                  <span>{selectedBooking?.value}</span>
-                </div>
-              </div>
-            </div>
-          )}
+      
+      <div className="bg-primary/5 border border-primary/10 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
+        <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-primary/10 to-transparent pointer-events-none" />
+        <div className="flex flex-col gap-1.5 z-10 text-center md:text-left">
+          <h3 className="text-lg font-bold text-primary flex items-center gap-2 justify-center md:justify-start">
+            <CheckCircle2 className="h-5 w-5" /> Smart Dispatch Active
+          </h3>
+          <p className="text-xs text-muted-foreground max-w-md">
+            Your resources are currently optimized for maximum utilization. 12 assets are in field and 4 are ready for deployment.
+          </p>
         </div>
-      </Drawer>
+        <Button variant="outline" className="z-10 bg-background hover:bg-muted gap-2 border-primary/20 text-primary font-bold text-xs uppercase tracking-wider">
+          Open Dispatch View <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   )
 }

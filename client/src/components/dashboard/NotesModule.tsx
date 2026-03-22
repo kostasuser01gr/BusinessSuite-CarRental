@@ -1,21 +1,29 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Plus, Pin, Trash2, Edit3, Check, X, Tag } from 'lucide-react'
-import { useOperations } from '../../providers/OperationsProvider'
 import { cn } from '../../utils/cn'
 import { Note } from '../../../../shared/types'
+import { useNotes } from '../../hooks/useNotes'
+import { animateStaggeredReveal, animatePulse } from '../../animations'
+import { Skeleton } from '../ui/Skeleton'
 
 export function NotesModule() {
-  const { notes, addNote, togglePin, deleteNote, updateNote } = useOperations()
+  const { notes, addNote, togglePin, deleteNote, updateNote, isLoading } = useNotes()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editNote, setEditNote] = useState<{ title: string, content: string, category: string }>({ title: '', content: '', category: '' })
+  const listRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (listRef.current && notes.length > 0 && !isLoading) {
+      const items = listRef.current.querySelectorAll('.note-item-animate')
+      animateStaggeredReveal(items, 40)
+    }
+  }, [notes.length, isLoading])
 
   const handleAddNote = () => {
-    addNote('New Note', '', 'General')
-    // Find the newly added note to start editing (it will be the first one)
-    // For simplicity, we just trigger the generic add.
+    addNote({ title: 'New Note', content: '', category: 'General' })
   }
 
   const startEditing = (note: Note) => {
@@ -25,7 +33,7 @@ export function NotesModule() {
 
   const saveEdit = () => {
     if (!editingId) return
-    updateNote(editingId, editNote.title, editNote.content)
+    updateNote({ id: editingId, title: editNote.title, content: editNote.content })
     setEditingId(null)
   }
 
@@ -39,13 +47,17 @@ export function NotesModule() {
     <Card className="h-full" data-testid="notes-module">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle>Quick Notes</CardTitle>
-        <Button variant="ghost" size="sm" onClick={handleAddNote} aria-label="Add new note">
+        <Button variant="ghost" size="sm" onClick={(e) => { animatePulse(e.currentTarget); handleAddNote(); }} aria-label="Add new note">
           <Plus className="h-4 w-4 mr-1" /> Add
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3 mt-2">
-          {notes.length === 0 ? (
+        <div className="space-y-3 mt-2" ref={listRef}>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2].map(i => <Skeleton key={i} className="h-24 w-full" />)}
+            </div>
+          ) : notes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">
               No notes yet. Capture your thoughts!
             </div>
@@ -54,7 +66,7 @@ export function NotesModule() {
               <div 
                 key={note.id} 
                 className={cn(
-                  "group relative rounded-lg border p-3 transition-all duration-200",
+                  "note-item-animate group relative rounded-lg border p-3 transition-all duration-200 opacity-0",
                   editingId === note.id 
                     ? "border-primary bg-background shadow-md" 
                     : "border-border bg-card hover:border-muted-foreground/50"
@@ -90,7 +102,7 @@ export function NotesModule() {
                         <button onClick={cancelEdit} className="p-1 text-muted-foreground hover:text-foreground" aria-label="Cancel editing note">
                           <X className="h-4 w-4" />
                         </button>
-                        <button onClick={saveEdit} className="p-1 text-emerald-500 hover:text-emerald-400" aria-label="Save note changes">
+                        <button onClick={(e) => { animatePulse(e.currentTarget); saveEdit(); }} className="p-1 text-emerald-500 hover:text-emerald-400" aria-label="Save note changes">
                           <Check className="h-4 w-4" />
                         </button>
                       </div>
@@ -107,7 +119,7 @@ export function NotesModule() {
                       </h4>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
-                          onClick={() => togglePin(note.id)} 
+                          onClick={(e) => { animatePulse(e.currentTarget); togglePin(note.id); }} 
                           className={cn(
                             "p-1 transition-colors",
                             note.pinned ? "text-primary" : "text-muted-foreground hover:text-primary"
@@ -117,14 +129,14 @@ export function NotesModule() {
                           <Pin className="h-3 w-3" />
                         </button>
                         <button 
-                          onClick={() => startEditing(note)} 
+                          onClick={(e) => { animatePulse(e.currentTarget); startEditing(note); }} 
                           className="p-1 text-muted-foreground hover:text-primary"
                           aria-label={`Edit note ${note.title}`}
                         >
                           <Edit3 className="h-3 w-3" />
                         </button>
                         <button 
-                          onClick={() => deleteNote(note.id)} 
+                          onClick={(e) => { animatePulse(e.currentTarget); deleteNote(note.id); }} 
                           className="p-1 text-muted-foreground hover:text-destructive"
                           aria-label={`Delete note ${note.title}`}
                         >

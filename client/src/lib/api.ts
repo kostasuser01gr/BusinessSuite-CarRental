@@ -1,6 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
+  // Use relative path if API_URL is empty (dev proxy) or if endpoint already has a protocol
   const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
   
   const response = await fetch(url, {

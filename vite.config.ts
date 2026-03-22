@@ -14,11 +14,23 @@ export default defineConfig({
   },
   server: {
     port: 3100,
-    host: '0.0.0.0'
+    host: '0.0.0.0',
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true,
+      }
+    }
   },
   preview: {
     port: 3100,
-    host: '0.0.0.0'
+    host: '0.0.0.0',
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true,
+      }
+    }
   },
   build: {
     outDir: path.resolve(__dirname, 'dist/client'),

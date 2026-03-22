@@ -1,13 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Dashboard - Module Verification', () => {
-  const testUser = {
-    name: 'Dashboard Tester',
-    email: `dash-${Date.now()}@example.com`,
-    password: 'password123'
-  };
-
+  
   test.beforeEach(async ({ page }) => {
+    const testUser = {
+      name: 'Dashboard Tester',
+      email: `dash-${Date.now()}-${Math.random().toString(36).substring(7)}@example.com`,
+      password: 'password123'
+    };
+
     // 1. Signup to get to dashboard
     await page.goto('/signup');
     await page.fill('input[id="name"]', testUser.name);
@@ -46,6 +47,8 @@ test.describe('Dashboard - Module Verification', () => {
 
   test('Assistant interaction: suggested action', async ({ page }) => {
     const assistant = page.getByTestId('assistant-module');
+    await expect(assistant).toBeVisible({ timeout: 10000 });
+    
     await assistant.getByPlaceholder(/Ask anything/i).fill('create a task for meeting');
     await assistant.locator('button', { has: page.locator('svg.lucide-send') }).click();
 
@@ -67,7 +70,11 @@ test.describe('Dashboard - Module Verification', () => {
     await page.click('button:has-text("Dashboard")');
 
     // Toggle KPI visibility (it is visible by default)
-    const kpiToggle = page.locator('div:has-text("KPI Overview")').getByRole('button', { name: /Visible/i });
+    // Be more specific to find the toggle for KPI Overview
+    const kpiToggleRow = page.locator('div.flex.items-center.justify-between', { hasText: 'KPI Overview' });
+    const kpiToggle = kpiToggleRow.getByRole('button', { name: /Visible|Hidden/i });
+    
+    await expect(kpiToggle).toHaveText(/Visible/i);
     await kpiToggle.click();
     await expect(kpiToggle).toHaveText(/Hidden/i);
 
