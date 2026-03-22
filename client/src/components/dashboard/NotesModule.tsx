@@ -23,7 +23,8 @@ export function NotesModule() {
   }, [notes.length, isLoading])
 
   const handleAddNote = () => {
-    addNote({ title: 'New Note', content: '', category: 'General' })
+    setEditingId('draft-note')
+    setEditNote({ title: '', content: '', category: 'General' })
   }
 
   const startEditing = (note: Note) => {
@@ -33,15 +34,40 @@ export function NotesModule() {
 
   const saveEdit = () => {
     if (!editingId) return
-    updateNote({ id: editingId, title: editNote.title, content: editNote.content })
+
+    const payload = {
+      title: editNote.title.trim() || 'Untitled Note',
+      content: editNote.content,
+      category: editNote.category.trim() || 'General',
+    }
+
+    if (editingId === 'draft-note') {
+      addNote(payload)
+    } else {
+      updateNote({ id: editingId, title: payload.title, content: payload.content })
+    }
+
     setEditingId(null)
+    setEditNote({ title: '', content: '', category: '' })
   }
 
   const cancelEdit = () => {
     setEditingId(null)
+    setEditNote({ title: '', content: '', category: '' })
   }
 
-  const sortedNotes = [...notes].sort((a, b) => (a.pinned === b.pinned ? 0 : a.pinned ? -1 : 1))
+  const draftNote: Note | null = editingId === 'draft-note'
+    ? {
+        id: 'draft-note',
+        title: editNote.title || 'New Note',
+        content: editNote.content,
+        pinned: false,
+        category: editNote.category || 'General',
+        updatedAt: new Date().toISOString(),
+      }
+    : null
+
+  const sortedNotes = [...(draftNote ? [draftNote] : []), ...notes].sort((a, b) => (a.pinned === b.pinned ? 0 : a.pinned ? -1 : 1))
 
   return (
     <Card className="h-full" data-testid="notes-module">
@@ -80,6 +106,7 @@ export function NotesModule() {
                       placeholder="Title"
                       className="h-8 text-sm font-medium bg-background border-input"
                       aria-label="Edit note title input"
+                      data-testid="note-title-input"
                     />
                     <textarea 
                       value={editNote.content}
@@ -87,6 +114,7 @@ export function NotesModule() {
                       placeholder="Note content..."
                       className="w-full min-h-[80px] text-xs bg-background border border-input rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
                       aria-label="Edit note content textarea"
+                      data-testid="note-content-input"
                     />
                     <div className="flex items-center gap-2">
                       <div className="relative flex-1">
@@ -102,7 +130,7 @@ export function NotesModule() {
                         <button onClick={cancelEdit} className="p-1 text-muted-foreground hover:text-foreground" aria-label="Cancel editing note">
                           <X className="h-4 w-4" />
                         </button>
-                        <button onClick={(e) => { animatePulse(e.currentTarget); saveEdit(); }} className="p-1 text-emerald-500 hover:text-emerald-400" aria-label="Save note changes">
+                        <button onClick={(e) => { animatePulse(e.currentTarget); saveEdit(); }} className="p-1 text-emerald-500 hover:text-emerald-400" aria-label="Save note changes" data-testid="note-save-button">
                           <Check className="h-4 w-4" />
                         </button>
                       </div>

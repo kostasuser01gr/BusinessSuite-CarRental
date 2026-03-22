@@ -40,9 +40,9 @@ test.describe('AdaptiveAI Business Suite - Core Flows', () => {
     
     // 4. Note Interaction
     await page.click('button[aria-label="Add new note"]'); 
-    await page.fill('input[aria-label="Edit note title input"]', 'Deployment Checklist');
-    await page.fill('textarea[aria-label="Edit note content textarea"]', '1. Tests pass\n2. Build works\n3. Lint clean');
-    await page.click('button[aria-label="Save note changes"]'); 
+    await page.getByTestId('note-title-input').fill('Deployment Checklist');
+    await page.getByTestId('note-content-input').fill('1. Tests pass\n2. Build works\n3. Lint clean');
+    await page.getByTestId('note-save-button').click(); 
 
     await expect(page.locator('text=Deployment Checklist')).toBeVisible();
 

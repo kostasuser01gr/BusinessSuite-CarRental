@@ -549,6 +549,8 @@ export function AssistantModule() {
           <div className="relative flex gap-2">
             <Input
               placeholder="Ask Copilot to brief, plan, analyze, or draft..."
+              data-testid="assistant-input"
+              aria-label="Assistant prompt input"
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
               onKeyDown={(event) => {
@@ -561,6 +563,8 @@ export function AssistantModule() {
             />
             <Button
               onClick={() => void submitPrompt(prompt)}
+              aria-label="Send assistant prompt"
+              data-testid="assistant-send"
               size="icon"
               className="absolute right-1.5 top-1.5 h-9 w-9 shrink-0 rounded-lg shadow-lg transition-all hover:scale-105 active:scale-95"
               disabled={copilotRun.isPending || !prompt.trim()}
