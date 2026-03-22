@@ -49,11 +49,11 @@ test.describe('Dashboard - Module Verification', () => {
     const assistant = page.getByTestId('assistant-module');
     await expect(assistant).toBeVisible({ timeout: 10000 });
     
-    await assistant.getByPlaceholder(/Ask anything/i).fill('create a task for meeting');
-    await assistant.locator('button', { has: page.locator('svg.lucide-send') }).click();
+    await assistant.getByTestId('assistant-input').fill('create a task for meeting');
+    await assistant.getByTestId('assistant-send').click();
 
     // Should see an action chip
-    const actionChip = assistant.getByRole('button', { name: /Create Task/i });
+    const actionChip = assistant.getByRole('button', { name: /Create executive follow-up task/i });
     await expect(actionChip).toBeVisible();
     
     // Click action chip
@@ -61,7 +61,7 @@ test.describe('Dashboard - Module Verification', () => {
     
     // Verify task was added to TasksModule
     const taskModule = page.getByTestId('tasks-module');
-    await expect(taskModule.locator('text=create a task for meeting')).toBeVisible();
+    await expect(taskModule.locator('text=Review operational bottlenecks and assign owners')).toBeVisible();
   });
 
   test('Settings: toggle widget visibility', async ({ page }) => {
