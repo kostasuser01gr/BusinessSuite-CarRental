@@ -8,3 +8,9 @@ playwright-report
 test-results
 coverage
 .DS_Store
+
+*.log
+playwright-report/
+test-results/
+dist/
+.codex-evidence/
