@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger.js';
 
+type AsyncRouteHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => unknown | Promise<unknown>;
+
 export class AppError extends Error {
   statusCode: number;
   isOperational: boolean;
@@ -19,7 +25,7 @@ export const errorHandler = (
   err: any,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
   let statusCode = err.statusCode || err.status || 500;
   let message = err.message || 'Internal Server Error';
@@ -109,7 +115,7 @@ export const notFoundHandler = (req: Request, res: Response) => {
   });
 };
 
-export const asyncHandler = (fn: Function) => {
+export const asyncHandler = (fn: AsyncRouteHandler) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };

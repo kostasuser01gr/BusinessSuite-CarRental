@@ -3,17 +3,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger.js';
 import morgan from 'morgan';
 
-declare global {
-  namespace Express {
-    interface Request {
-      correlationId?: string;
-      startTime?: number;
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    correlationId?: string;
+    startTime?: number;
   }
 }
 
 export const correlationIdMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  req.correlationId = req.headers['x-correlation-id'] as string || uuidv4();
+  req.correlationId = (req.headers['x-correlation-id'] as string) || uuidv4();
   res.setHeader('X-Correlation-ID', req.correlationId);
   req.startTime = Date.now();
   next();
@@ -48,10 +46,10 @@ export const requestLogger = morgan(
 );
 
 export const auditLogger = (action: string) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const originalSend = res.send;
+  return (req: Request, res: Response, next: NextFunction) => {
+    const originalSend = res.send.bind(res);
 
-    res.send = function (data: any) {
+    res.send = ((data: any) => {
       if (res.statusCode >= 200 && res.statusCode < 300) {
         logger.info('Audit Log', {
           correlationId: req.correlationId,
@@ -64,8 +62,8 @@ export const auditLogger = (action: string) => {
         });
       }
 
-      return originalSend.call(this, data);
-    };
+      return originalSend(data);
+    }) as typeof res.send;
 
     next();
   };

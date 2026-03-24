@@ -44,7 +44,7 @@ describe('Backend Auth API - Hardening Suite', () => {
         })
       
       expect(res.status).toBe(400)
-      expect(res.body.error).toContain('already exists')
+      expect(res.body.error.message).toContain('already exists')
     })
   })
 
@@ -82,7 +82,7 @@ describe('Backend Auth API - Hardening Suite', () => {
         })
       
       expect(res.status).toBe(401)
-      expect(res.body.error).toBe('Invalid credentials')
+      expect(res.body.error.message).toBe('Invalid credentials')
     })
   })
 

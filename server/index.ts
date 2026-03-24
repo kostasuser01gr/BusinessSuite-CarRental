@@ -25,11 +25,23 @@ import {
   notFoundHandler,
 } from './middleware/errorHandler.js';
 
+const isTest = config.nodeEnv === 'test';
 const PgSession = connectPgSimple(session);
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: config.isProd ? { rejectUnauthorized: false } : false,
-});
+
+const pool = !isTest && process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: config.isProd ? { rejectUnauthorized: false } : false,
+    })
+  : null;
+
+const sessionStore = !isTest && pool
+  ? new PgSession({
+      pool,
+      tableName: 'sessions',
+      createTableIfMissing: false,
+    })
+  : new session.MemoryStore();
 
 export const app = express();
 
@@ -48,11 +60,7 @@ app.use(requestSizeLimit);
 app.use(requestLogger);
 
 app.use(session({
-  store: new PgSession({
-    pool,
-    tableName: 'sessions',
-    createTableIfMissing: false,
-  }),
+  store: sessionStore,
   name: 'adaptive_sid',
   secret: config.sessionSecret,
   resave: false,
