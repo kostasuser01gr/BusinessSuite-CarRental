@@ -41,6 +41,26 @@ export const errorHandler = (
     },
   });
 
+  if (err.name === 'ZodError') {
+    statusCode = 400;
+    code = 'VALIDATION_ERROR';
+    message = 'Validation failed';
+    const zodError = err as any;
+    const details = zodError.issues?.map((issue: any) => ({
+      field: issue.path.join('.'),
+      message: issue.message,
+    }));
+
+    return res.status(statusCode).json({
+      error: {
+        message,
+        code,
+        correlationId: req.correlationId,
+        details,
+      },
+    });
+  }
+
   if (err.name === 'ValidationError') {
     statusCode = 400;
     code = 'VALIDATION_ERROR';
