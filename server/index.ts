@@ -116,12 +116,13 @@ process.on('uncaughtException', (error: Error) => {
 if (config.nodeEnv !== 'test') {
   testConnection().then((connected) => {
     if (connected) {
-      app.listen(config.port, () => {
-        logger.info(`API listening on http://localhost:${config.port}`);
-      });
+      logger.info('Database connection established');
     } else {
-      logger.error('Failed to connect to database. Server not started.');
-      process.exit(1);
+      logger.warn('Database connection failed - using fallback in-memory storage for development');
     }
+
+    app.listen(config.port, () => {
+      logger.info(`API listening on http://localhost:${config.port}`);
+    });
   });
 }

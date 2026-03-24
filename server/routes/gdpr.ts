@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
-import { AuthService } from '../services/auth.service.js';
+import { AuthService } from '../services/auth.service.wrapper.js';
 import { auditLogger } from '../middleware/logging.js';
 
 const router = Router();

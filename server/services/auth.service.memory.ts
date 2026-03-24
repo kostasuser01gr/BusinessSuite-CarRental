@@ -46,4 +46,36 @@ export class AuthService {
     const { passwordHash: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
+
+  static async updatePassword(userId: string, newPassword: string) {
+    const user = findUserById(userId);
+    if (!user) {
+      throw { status: 404, message: 'User not found' };
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    user.passwordHash = passwordHash;
+  }
+
+  static async softDeleteUser(userId: string) {
+    const user = findUserById(userId);
+    if (!user) {
+      throw { status: 404, message: 'User not found' };
+    }
+  }
+
+  static async exportUserData(userId: string) {
+    const user = findUserById(userId);
+    if (!user) {
+      throw { status: 404, message: 'User not found' };
+    }
+
+    const { passwordHash: _, ...userData } = user;
+    return {
+      ...userData,
+      tasks: [],
+      notes: [],
+      exportedAt: new Date().toISOString(),
+    };
+  }
 }

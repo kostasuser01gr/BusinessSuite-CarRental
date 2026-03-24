@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { signupSchema, loginSchema } from '../../shared/schemas.js';
-import { AuthService } from '../services/auth.service.js';
+import { AuthService } from '../services/auth.service.wrapper.js';
 import { requireAuth } from '../middleware/auth.js';
 import { authLimiter } from '../middleware/security.js';
 import { asyncHandler } from '../middleware/errorHandler.js';

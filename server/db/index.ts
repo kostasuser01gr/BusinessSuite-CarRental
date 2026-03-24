@@ -5,21 +5,29 @@ import * as schema from './schema.js';
 
 const connectionString = process.env.DATABASE_URL;
 
-if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is not set');
+let pool: any;
+let db: any;
+
+if (connectionString) {
+  pool = new Pool({
+    connectionString,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
+  db = drizzle(pool, { schema });
+} else {
+  console.warn('DATABASE_URL not set - database features unavailable');
 }
 
-const pool = new Pool({
-  connectionString,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
-
-export const db = drizzle(pool, { schema });
+export { db };
 
 export async function testConnection() {
+  if (!pool) {
+    return false;
+  }
+
   try {
     const client = await pool.connect();
     await client.query('SELECT NOW()');
@@ -32,13 +40,15 @@ export async function testConnection() {
   }
 }
 
-process.on('SIGTERM', async () => {
-  await pool.end();
-  console.log('Database pool closed');
-});
+if (pool) {
+  process.on('SIGTERM', async () => {
+    await pool.end();
+    console.log('Database pool closed');
+  });
 
-process.on('SIGINT', async () => {
-  await pool.end();
-  console.log('Database pool closed');
-  process.exit(0);
-});
+  process.on('SIGINT', async () => {
+    await pool.end();
+    console.log('Database pool closed');
+    process.exit(0);
+  });
+}
