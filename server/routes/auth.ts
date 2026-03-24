@@ -1,53 +1,38 @@
-import { Router } from 'express'
-import { signupSchema, loginSchema } from '../../shared/schemas.js'
-import { AuthService } from '../services/auth.service.js'
-import { requireAuth } from '../middleware/auth.js'
+import { Router, Request, Response } from 'express';
+import { signupSchema, loginSchema } from '../../shared/schemas.js';
+import { AuthService } from '../services/auth.service.js';
+import { requireAuth } from '../middleware/auth.js';
+import { authLimiter } from '../middleware/security.js';
+import { asyncHandler } from '../middleware/errorHandler.js';
+import { auditLogger } from '../middleware/logging.js';
 
-const router = Router()
+const router = Router();
 
-router.post('/signup', async (req, res) => {
-  try {
-    const validated = signupSchema.parse(req.body)
-    const user = await AuthService.signup(validated)
-    
-    req.session.userId = user.id
-    res.status(201).json(user)
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
-      return res.status(400).json({ error: 'Validation Error', details: error.errors })
-    }
-    const status = error.status || 500
-    const message = error.message || 'Server error during signup'
-    res.status(status).json({ error: message })
-  }
-})
+router.post('/signup', authLimiter, auditLogger('user.signup'), asyncHandler(async (req: Request, res: Response) => {
+  const validated = signupSchema.parse(req.body);
+  const user = await AuthService.signup(validated);
 
-router.post('/login', async (req, res) => {
-  try {
-    const validated = loginSchema.parse(req.body)
-    const user = await AuthService.login(validated)
+  req.session.userId = user.id;
+  res.status(201).json(user);
+}));
 
-    req.session.userId = user.id
-    res.status(200).json(user)
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
-      return res.status(400).json({ error: 'Validation Error', details: error.errors })
-    }
-    const status = error.status || 500
-    const message = error.message || 'Server error during login'
-    res.status(status).json({ error: message })
-  }
-})
+router.post('/login', authLimiter, auditLogger('user.login'), asyncHandler(async (req: Request, res: Response) => {
+  const validated = loginSchema.parse(req.body);
+  const user = await AuthService.login(validated);
 
-router.post('/logout', (req, res) => {
+  req.session.userId = user.id;
+  res.status(200).json(user);
+}));
+
+router.post('/logout', auditLogger('user.logout'), (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      return res.status(500).json({ error: 'Could not log out' })
+      return res.status(500).json({ error: 'Could not log out' });
     }
-    res.clearCookie('adaptive_sid')
-    res.json({ message: 'Logged out successfully' })
-  })
-})
+    res.clearCookie('adaptive_sid');
+    res.json({ message: 'Logged out successfully' });
+  });
+});
 
 router.get('/me', requireAuth, async (req, res) => {
   // requireAuth already populated req.user

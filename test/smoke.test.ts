@@ -12,6 +12,9 @@ describe('bootstrap smoke test', () => {
   it('verifies backend /health endpoint', async () => {
     const res = await request.get('/health')
     expect(res.status).toBe(200)
-    expect(res.body).toEqual({ ok: true, service: 'adaptiveai-business-suite-api' })
+    expect(res.body.ok).toBe(true)
+    expect(res.body.service).toBe('adaptiveai-business-suite-api')
+    expect(res.body.timestamp).toBeDefined()
+    expect(res.body.uptime).toBeGreaterThan(0)
   })
 })
