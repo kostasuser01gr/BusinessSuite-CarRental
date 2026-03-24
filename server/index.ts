@@ -49,8 +49,28 @@ app.use(correlationIdMiddleware);
 
 app.use(securityHeaders);
 
+const allowedOrigins = [
+  config.clientUrl,
+  ...config.corsAllowedOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+];
+
 app.use(cors({
-  origin: [config.clientUrl],
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    if (/^https:\/\/adaptive-ai-business-suite.*\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
 }));
 
