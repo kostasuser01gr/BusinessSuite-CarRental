@@ -15,6 +15,9 @@ export class AuthService {
       name: input.name,
       email: input.email,
       passwordHash,
+      role: 'viewer' as const,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     createUser(newUser);

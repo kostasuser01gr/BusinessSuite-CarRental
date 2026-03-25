@@ -29,7 +29,10 @@ export const errorHandler = (
 ) => {
   let statusCode = err.statusCode || err.status || 500;
   let message = err.message || 'Internal Server Error';
-  let code = err.code || 'INTERNAL_ERROR';
+
+  let code =
+    err.code ||
+    (statusCode >= 500 ? 'INTERNAL_ERROR' : 'REQUEST_ERROR');
 
   logger.error('Error occurred', {
     correlationId: req.correlationId,
@@ -90,8 +93,9 @@ export const errorHandler = (
     message = 'Referenced resource does not exist';
   }
 
-  if (req.app.get('env') === 'production' && !err.isOperational) {
+  if (req.app.get('env') === 'production' && statusCode >= 500) {
     message = 'Something went wrong';
+    code = 'INTERNAL_ERROR';
   }
 
   res.status(statusCode).json({
