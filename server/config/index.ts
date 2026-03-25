@@ -9,7 +9,7 @@ const configSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   VITE_CLIENT_URL: z.string().url().default('http://localhost:3100'),
   CORS_ALLOWED_ORIGINS: z.string().optional(),
-  DATABASE_URL: z.string().optional(), // Make required when DB is ready
+  DATABASE_URL: z.string().optional(),
 });
 
 const env = configSchema.safeParse(process.env);
@@ -50,8 +50,7 @@ const isPlaceholderDatabaseUrl =
   rawDatabaseUrl.includes('USER:PASS@HOST:PORT/DBNAME') ||
   rawDatabaseUrl.includes('postgres://base');
 
-const normalizedDatabaseUrl =
-  isPlaceholderDatabaseUrl ? undefined : rawDatabaseUrl;
+const normalizedDatabaseUrl = isPlaceholderDatabaseUrl ? undefined : rawDatabaseUrl;
 
 export const config = {
   port: validatedEnv.PORT,

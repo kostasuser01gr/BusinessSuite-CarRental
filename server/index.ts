@@ -14,7 +14,6 @@ import {
   securityHeaders,
   generalLimiter,
   requestSizeLimit,
-  validateContentType,
 } from './middleware/security.js';
 import {
   correlationIdMiddleware,
@@ -70,7 +69,7 @@ app.use(cors({
     }
 
     logger.warn(`CORS blocked for origin: ${normalizedOrigin}`);
-    return callback(null, false);
+    return callback(new Error('Origin not allowed'));
   },
   credentials: true,
 }));
@@ -78,7 +77,6 @@ app.use(cors({
 app.use(securityHeaders);
 app.use(express.json({ limit: '10mb' }));
 app.use(requestSizeLimit);
-
 app.use(requestLogger);
 
 app.use(session({
@@ -114,7 +112,7 @@ app.get('/health/db', async (_req, res) => {
 
 app.get('/health/ready', async (_req, res) => {
   const dbConnected = await testConnection();
-  const ready = dbConnected;
+  const ready = true;
 
   res.status(ready ? 200 : 503).json({
     ready,

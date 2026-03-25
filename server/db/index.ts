@@ -24,9 +24,7 @@ if (config.hasDatabase && config.databaseUrl) {
 export { db };
 
 export async function testConnection() {
-  if (!pool) {
-    return false;
-  }
+  if (!pool) return false;
 
   try {
     const client = await pool.connect();
