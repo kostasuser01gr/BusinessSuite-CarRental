@@ -43,12 +43,23 @@ if (validatedEnv.NODE_ENV === 'production' && !validatedEnv.SESSION_SECRET) {
   process.exit(1);
 }
 
+const rawDatabaseUrl = validatedEnv.DATABASE_URL?.trim();
+
+const isPlaceholderDatabaseUrl =
+  !rawDatabaseUrl ||
+  rawDatabaseUrl.includes('USER:PASS@HOST:PORT/DBNAME') ||
+  rawDatabaseUrl.includes('postgres://base');
+
+const normalizedDatabaseUrl =
+  isPlaceholderDatabaseUrl ? undefined : rawDatabaseUrl;
+
 export const config = {
   port: validatedEnv.PORT,
   sessionSecret: validatedEnv.SESSION_SECRET ?? 'dev-fallback-secret-extremely-long-and-secure',
   nodeEnv: validatedEnv.NODE_ENV,
   clientUrl: validatedEnv.VITE_CLIENT_URL,
   corsAllowedOrigins: validatedEnv.CORS_ALLOWED_ORIGINS ?? '',
-  databaseUrl: validatedEnv.DATABASE_URL,
+  databaseUrl: normalizedDatabaseUrl,
+  hasDatabase: !!normalizedDatabaseUrl,
   isProd: validatedEnv.NODE_ENV === 'production',
 };

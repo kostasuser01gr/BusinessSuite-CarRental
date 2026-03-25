@@ -28,9 +28,9 @@ import {
 const isTest = config.nodeEnv === 'test';
 const PgSession = connectPgSimple(session);
 
-const pool = !isTest && process.env.DATABASE_URL
+const pool = !isTest && config.hasDatabase && config.databaseUrl
   ? new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: config.databaseUrl,
       ssl: config.isProd ? { rejectUnauthorized: false } : false,
     })
   : null;
@@ -44,6 +44,8 @@ const sessionStore = !isTest && pool
   : new session.MemoryStore();
 
 export const app = express();
+
+app.set('trust proxy', 1);
 
 app.use(correlationIdMiddleware);
 
@@ -73,6 +75,7 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(securityHeaders);
 app.use(express.json({ limit: '10mb' }));
 app.use(requestSizeLimit);
 

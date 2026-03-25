@@ -1,15 +1,8 @@
-import { AuthService as DbAuthService } from './auth.service.js';
+import { config } from '../config/index.js';
+import { AuthService as DatabaseAuthService } from './auth.service.js';
 import { AuthService as MemoryAuthService } from './auth.service.memory.js';
 
-const isTest = process.env.NODE_ENV === 'test';
-const useDatabase = !isTest && !!process.env.DATABASE_URL;
+const isTest = config.nodeEnv === 'test';
+const useDatabase = !isTest && config.hasDatabase;
 
-export const AuthService = useDatabase ? DbAuthService : MemoryAuthService;
-
-if (!useDatabase) {
-  console.warn(
-    isTest
-      ? 'Using in-memory auth service for tests'
-      : 'Using in-memory auth service - data will not persist'
-  );
-}
+export const AuthService = useDatabase ? DatabaseAuthService : MemoryAuthService;

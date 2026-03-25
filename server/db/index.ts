@@ -2,23 +2,23 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import pkg from 'pg';
 const { Pool } = pkg;
 import * as schema from './schema.js';
+import { config } from '../config/index.js';
 
-const connectionString = process.env.DATABASE_URL;
+let pool: any = null;
+let db: any = null;
 
-let pool: any;
-let db: any;
-
-if (connectionString) {
+if (config.hasDatabase && config.databaseUrl) {
   pool = new Pool({
-    connectionString,
+    connectionString: config.databaseUrl,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
   });
+
   db = drizzle(pool, { schema });
 } else {
-  console.warn('DATABASE_URL not set - database features unavailable');
+  console.warn('DATABASE_URL not set or invalid - database features unavailable');
 }
 
 export { db };

@@ -5,7 +5,14 @@ import { users } from '../db/schema.js';
 import { eq, and, isNull } from 'drizzle-orm';
 
 export class AuthService {
+  static ensureDatabase() {
+    if (!db) {
+      throw { status: 503, message: 'Database auth is unavailable' };
+    }
+  }
+
   static async signup(input: SignupInput) {
+    AuthService.ensureDatabase();
     const existing = await db.query.users.findFirst({
       where: eq(users.email, input.email),
     });
@@ -28,6 +35,7 @@ export class AuthService {
   }
 
   static async login(input: LoginInput) {
+    AuthService.ensureDatabase();
     const user = await db.query.users.findFirst({
       where: eq(users.email, input.email),
     });
@@ -75,6 +83,7 @@ export class AuthService {
   }
 
   static async getMe(userId: string) {
+    AuthService.ensureDatabase();
     const user = await db.query.users.findFirst({
       where: and(
         eq(users.id, userId),
@@ -91,6 +100,7 @@ export class AuthService {
   }
 
   static async updatePassword(userId: string, newPassword: string) {
+    AuthService.ensureDatabase();
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
     await db.update(users)
@@ -102,6 +112,7 @@ export class AuthService {
   }
 
   static async softDeleteUser(userId: string) {
+    AuthService.ensureDatabase();
     await db.update(users)
       .set({
         deletedAt: new Date(),
@@ -111,6 +122,7 @@ export class AuthService {
   }
 
   static async exportUserData(userId: string) {
+    AuthService.ensureDatabase();
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       with: {
