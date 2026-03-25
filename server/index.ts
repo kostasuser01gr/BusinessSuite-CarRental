@@ -47,8 +47,6 @@ export const app = express();
 
 app.use(correlationIdMiddleware);
 
-app.use(securityHeaders);
-
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || origin === 'null') return callback(null, true);
