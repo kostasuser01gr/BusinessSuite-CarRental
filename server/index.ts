@@ -49,27 +49,28 @@ app.use(correlationIdMiddleware);
 
 app.use(securityHeaders);
 
-const allowedOrigins = [
-  config.clientUrl,
-  ...config.corsAllowedOrigins
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean),
-];
-
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
+    if (!origin || origin === 'null') return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    const allowedOrigins = [
+      config.clientUrl,
+      ...config.corsAllowedOrigins.split(',').map(o => o.trim()).filter(Boolean)
+    ].map(o => o.replace(/\/$/, ''));
+
+    if (allowedOrigins.includes(normalizedOrigin)) {
       return callback(null, true);
     }
 
-    if (/^https:\/\/adaptive-ai-business-suite.*\.vercel\.app$/.test(origin)) {
+    const isProjectVercelDomain = /^https:\/\/(adaptive-ai-business-suite|adaptiveai-business-suite)(-.*)?\.vercel\.app$/.test(normalizedOrigin);
+
+    if (isProjectVercelDomain) {
       return callback(null, true);
     }
 
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    logger.warn(`CORS blocked for origin: ${normalizedOrigin}`);
+    return callback(null, false);
   },
   credentials: true,
 }));
