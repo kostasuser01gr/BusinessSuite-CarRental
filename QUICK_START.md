@@ -58,7 +58,7 @@ The system automatically falls back to in-memory storage when `DATABASE_URL` is 
 
 2. Update `.env`:
    ```bash
-   DATABASE_URL=postgresql://postgres.nbekawtjcmycdcvfygtt:YOUR_ACTUAL_PASSWORD@aws-0-us-west-1.pooler.supabase.com:6543/postgres
+   DATABASE_URL=postgresql://postgres.YOUR_PROJECT_REF:YOUR_ACTUAL_PASSWORD@aws-0-us-west-1.pooler.supabase.com:6543/postgres
    ```
 
 3. Restart the server - it will automatically use the database
